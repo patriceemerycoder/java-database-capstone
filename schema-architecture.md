@@ -55,3 +55,12 @@ Finally, the bound models are used in the response layer:
 In MVC flows, models are passed from the controller to Thymeleaf templates, where they are rendered as dynamic HTML for the browser.
 In REST flows, the same models (or transformed DTOs) are serialized into JSON and sent back to the client as part of an HTTP response.
 This marks the end of the request-response cycle, delivering either a full web page or structured API data, depending on the consumer.
+
+Summary:
+This design includes 7 steps:
+1.UI Layer - includes Dashboards and API
+2. Controllers - SpringBoot API and REST Controllers call the service layer
+3. Service Layer - Calls the REpositories for either MongoDB or MySQL depending on which data is needed.
+4. Repository Layer - The repository layer accesses either the Mondo DB engine for prescription documents, or the MySQL engine for Patient, Doctor, Admin, and appointments using JPA MySQL Model Entities. The MySQL MODEL ENTITIES are Patient, Doctor, Admin, and Appointments.
+6. Database Engine Layer - The Database engines connect to the Models (MySQL Models, MongoDB Models).
+7. Schema Views - These are the database schemas that are modeled within the database.
