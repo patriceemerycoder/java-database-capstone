@@ -1,41 +1,125 @@
-Admin User Stories
+### Role: Patient
 
-Admins are responsible for managing system functionality and user access.
+#### User Story 1
+**As a patient,** I want to **book an appointment online** so that I can visit the doctor at my preferred time.
 
-As an admin, I want to create, update, and deactivate user accounts so that access is properly controlled.
+**Acceptance Criteria**
+- Appointment booking form is available with date, time, and doctor selection.
+- System prevents double-booking.
+- Confirmation email or notification is sent.
 
-As an admin, I want to assign roles (doctor, patient) so users receive correct permissions.
+#### User Story 2
+**As a patient,** I want to **view my medical history** so I can understand my treatment timeline.
 
-As an admin, I want to view usage logs and audit trails so I can monitor system activity.
+**Acceptance Criteria**
+- Medical records are displayed in chronological order.
+- Access is restricted to authenticated users.
+- Only the patient can view their own records.
 
-As an admin, I want to manage clinic operating hours and scheduling rules so appointments align with clinic policies.
+#### User Story 3
+**As a patient,** I want to **message my doctor securely** so I can ask follow-up questions.
 
-As an admin, I want to configure notification settings (email/SMS) so patients and doctors stay informed.
+**Acceptance Criteria**
+- Messaging is encrypted and stored securely.
+- Messages are visible only to patient and assigned doctor.
+- Notification is sent when a new message is received.
 
-Patient User Stories
+#### User Story 4
+**As a patient,** I want to **receive reminders** for upcoming appointments so I don’t forget.
 
-Patients will interact with the portal primarily to manage appointments.
+**Acceptance Criteria**
+- Automated reminders via email or SMS.
+- Reminder schedule is configurable (e.g. 24h before).
+- Patients can opt in/out of reminders.
 
-As a patient, I want to register and log in securely so I can access my records and book appointments.
+#### User Story 5
+**As a patient,** I want to **update my personal details** so the clinic has my latest info.
 
-As a patient, I want to view available appointment slots by doctor so I can choose the best time for me.
+**Acceptance Criteria**
+- Form includes fields for address, contact number, emergency contact.
+- Changes trigger audit logging.
+- Only authenticated patients can update their own profile.
 
-As a patient, I want to reschedule or cancel appointments easily so I can manage changes in my schedule.
+### Role: Doctor
 
-As a patient, I want to receive reminders before my appointment so I don’t forget.
+#### User Story 1
+**As a doctor,** I want to **view my daily schedule** so I can manage my consultations effectively.
 
-As a patient, I want to view my medical history and past appointments so I can stay informed.
+**Acceptance Criteria**
+- Dashboard shows appointments in a timeline format.
+- Only the assigned doctor can view their schedule.
+- Can toggle between daily/weekly views.
 
-Doctor User Stories
+#### User Story 2
+**As a doctor,** I want to **add medical notes after a consultation** so I can track patient progress.
 
-Doctors manage availability and coordinate patient care through the portal.
+**Acceptance Criteria**
+- Notes are timestamped and editable only by the author.
+- Notes are attached to patient records.
+- Access control enforced by role and patient assignment.
 
-As a doctor, I want to set my weekly availability so patients can book accordingly.
+#### User Story 3
+**As a doctor,** I want to **prescribe medication digitally** so the pharmacy and patient are informed.
 
-As a doctor, I want to view my upcoming appointments so I can prepare for each visit.
+**Acceptance Criteria**
+- Prescription form captures drug, dosage, and duration.
+- Prescription logs are added to patient history.
+- Digital signature or verification required.
 
-As a doctor, I want to mark time slots as unavailable for meetings or leave so the system won’t overbook me.
+#### User Story 4
+**As a doctor,** I want to **refer patients to specialists** so they receive proper care.
 
-As a doctor, I want to update appointment outcomes or notes so medical records stay accurate.
+**Acceptance Criteria**
+- Referral form includes specialist name, reason, urgency.
+- Notification sent to patient and specialist.
+- Referrals appear in both patient and specialist dashboards.
 
-As a doctor, I want to receive daily schedule summaries so I’m organized each day.
+#### User Story 5
+**As a doctor,** I want to **mark appointments as completed or missed** so records stay accurate.
+
+**Acceptance Criteria**
+- Status selector available in appointment view.
+- Timestamp logged when status is updated.
+- Missed appointments trigger optional follow-up.
+
+### Role: Admin
+
+#### User Story 1
+**As an admin,** I want to **manage user roles and permissions** so I can enforce access control.
+
+**Acceptance Criteria**
+- Role assignment UI is accessible.
+- Permissions update instantly across system.
+- Audit trail tracks changes.
+
+#### User Story 2
+**As an admin,** I want to **monitor system activity logs** so I can detect suspicious behavior.
+
+**Acceptance Criteria**
+- Logs include login attempts, data changes, role updates.
+- Search and filter options are available.
+- Can export logs securely.
+
+#### User Story 3
+**As an admin,** I want to **generate reports for clinic performance** so management can make informed decisions.
+
+**Acceptance Criteria**
+- Reports include appointment stats, doctor utilization, patient feedback.
+- Export to CSV or view in dashboard.
+- Configurable time periods and filters.
+
+#### User Story 4
+**As an admin,** I want to **approve new doctor registrations** so only verified professionals join the system.
+
+**Acceptance Criteria**
+- Registration requests stored in review queue.
+- Admin can view credentials and approve/reject.
+- Approved users receive onboarding email.
+
+#### User Story 5
+**As an admin,** I want to **update clinic working hours and calendar** so scheduling reflects availability.
+
+**Acceptance Criteria**
+- Admin panel includes calendar editor.
+- Changes affect appointment booking module.
+- Supports holidays and emergency closures.
