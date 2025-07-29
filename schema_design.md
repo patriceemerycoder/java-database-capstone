@@ -69,7 +69,9 @@ BEGIN
 END //
  
 DELIMITER ;
----
+
+
+
 # MongoDb Collections Design
  
 {
