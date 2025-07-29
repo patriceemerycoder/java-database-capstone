@@ -1,5 +1,5 @@
 # Patient Clinic Project: Unified Database Design
- 
+# MySQL Database Design
 ##  MySQL Tables
  
 ### 1. `patients`
@@ -69,6 +69,8 @@ BEGIN
 END //
  
 DELIMITER ;
+
+## MongoDb Collections Design
  
 {
   "prescription_id": "RX123456",
