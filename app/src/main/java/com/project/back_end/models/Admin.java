@@ -33,5 +33,25 @@ public class Admin {
 
 // 5. Getters and Setters:
 //    - Standard getter and setter methods are provided for accessing and modifying the fields.
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+@Entity
+public class Admin {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotNull
+    @JsonProperty("username")
+    private String username;
+
+    @NotNull
+    @JsonProperty("password")
+    private String password;
+
+    // Getters and setters
+}
 }
