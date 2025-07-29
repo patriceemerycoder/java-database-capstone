@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - Smart Clinic</title>
+    <link rel="icon" type="image/png" href="../../static/assets/images/logo/logo.png" />
+    
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="../../static/assets/css/style.css">
+    <link rel="stylesheet" href="../../static/assets/css/doctorDashboard.css">
+    
+    <!-- JavaScript Files -->
+    <script src="../../static/js/util.js" defer></script>
+    <script src="../../static/js/components/header.js" defer></script>
+    <script src="../../static/js/components/footer.js" defer></script>
+    <script src="../../static/js/components/modals.js" defer></script>
+</head>
+<body>
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+    
+    <!-- Header Section -->
+    <div id="header"></div>
+    
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Welcome Section -->
+        <section class="welcome-section">
+            <div class="card">
+                <div class="card-body">
+                    <h1>Welcome, Dr. <span id="doctorName">Doctor</span>!</h1>
+                    <p class="text-muted">Manage your patients and appointments efficiently</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Quick Stats -->
+        <section class="stats-section">
+            <div class="row">
+                <div class="col-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <div class="stats-icon text-primary">📅</div>
+                            <h3 id="todayAppointmentsCount">0</h3>
+                            <p>Today's Appointments</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <div class="stats-icon text-success">👥</div>
+                            <h3 id="totalPatientsCount">0</h3>
+                            <p>Total Patients</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <div class="stats-icon text-warning">✅</div>
+                            <h3 id="completedAppointmentsCount">0</h3>
+                            <p>Completed Today</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <div class="stats-icon text-info">💊</div>
+                            <h3 id="prescriptionsIssuedCount">0</h3>
+                            <p>Prescriptions Issued</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Quick Actions -->
+        <section class="actions-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-3">
+                            <button class="btn btn-primary btn-lg" onclick="viewTodayAppointments()">
+                                📅 Today's Schedule
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-secondary btn-lg" onclick="viewAllPatients()">
+                                👥 My Patients
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-success btn-lg" onclick="createPrescriptionModal()">
+                                💊 New Prescription
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-warning btn-lg" onclick="viewPrescriptions()">
+                                📋 View Prescriptions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Today's Appointments -->
+        <section class="appointments-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Today's Appointments</h3>
+                    <button class="btn btn-outline btn-sm" onclick="viewAllAppointments()">View All</button>
+                </div>
+                <div class="card-body">
+                    <div id="todayAppointments">
+                        <div class="text-center">
+                            <div class="spinner"></div>
+                            <p>Loading appointments...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Recent Patients -->
+        <section class="patients-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Recent Patients</h3>
+                    <div class="search-filter">
+                        <input type="text" id="patientSearch" class="form-control" placeholder="Search patients..." style="width: 200px; display: inline-block;">
+                        <button class="btn btn-outline btn-sm" onclick="viewAllPatients()" style="margin-left: 10px;">View All</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="recentPatients">
+                        <div class="text-center">
+                            <div class="spinner"></div>
+                            <p>Loading patients...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer Section -->
+    <div id="footer"></div>
+    
+    <!-- All Appointments Modal -->
+    <div id="appointmentsModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>My Appointments</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="appointment-filters mb-3">
+                    <button class="btn btn-sm btn-outline" onclick="filterDoctorAppointments('all')" id="filterAllAppts">All</button>
+                    <button class="btn btn-sm btn-outline" onclick="filterDoctorAppointments('scheduled')" id="filterScheduled">Scheduled</button>
+                    <button class="btn btn-sm btn-outline" onclick="filterDoctorAppointments('completed')" id="filterCompleted">Completed</button>
+                    <button class="btn btn-sm btn-outline" onclick="filterDoctorAppointments('cancelled')" id="filterCancelled">Cancelled</button>
+                </div>
+                <div id="allAppointmentsList">
+                    <div class="text-center">
+                        <div class="spinner"></div>
+                        <p>Loading appointments...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- All Patients Modal -->
+    <div id="patientsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>My Patients</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="patient-search mb-3">
+                    <input type="text" id="allPatientsSearch" class="form-control" placeholder="Search patients by name, email, or phone...">
+                </div>
+                <div id="allPatientsList">
+                    <div class="text-center">
+                        <div class="spinner"></div>
+                        <p>Loading patients...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Patient Details Modal -->
+    <div id="patientDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Patient Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="patientDetailsContent">
+                    <div class="text-center">
+                        <div class="spinner"></div>
+                        <p>Loading patient details...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Prescription Modal -->
+    <div id="createPrescriptionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Prescription</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="prescriptionForm">
+                    <div class="form-group">
+                        <label for="prescriptionPatient" class="form-label">Select Patient</label>
+                        <select id="prescriptionPatient" class="form-control form-select" required>
+                            <option value="">Choose a patient...</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prescriptionMedication" class="form-label">Medication</label>
+                        <input type="text" id="prescriptionMedication" class="form-control" required placeholder="Enter medication name">
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prescriptionDosage" class="form-label">Dosage</label>
+                        <input type="text" id="prescriptionDosage" class="form-control" required placeholder="e.g., 500mg">
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prescriptionFrequency" class="form-label">Frequency</label>
+                        <input type="text" id="prescriptionFrequency" class="form-control" required placeholder="e.g., Twice daily">
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prescriptionNotes" class="form-label">Notes (Optional)</label>
+                        <textarea id="prescriptionNotes" class="form-control" rows="3" placeholder="Additional instructions or notes..."></textarea>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Prescription</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Prescriptions Modal -->
+    <div id="prescriptionsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>My Prescriptions</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="prescriptionsList">
+                    <div class="text-center">
+                        <div class="spinner"></div>
+                        <p>Loading prescriptions...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Import services
+        import { 
+            getDoctorProfile,
+            getDoctorAppointments,
+            getTodayAppointments,
+            updateAppointmentStatus,
+            completeAppointment,
+            getDoctorPatients,
+            getPatientDetails,
+            createPrescription,
+            getDoctorPrescriptions,
+            getDoctorStats,
+            searchPatients,
+            formatAppointmentTime,
+            getAppointmentStatusText,
+            getAppointmentStatusClass
+        } from '../../static/js/services/doctorServices.js';
+        
+        // Global variables
+        let currentDoctor = null;
+        let allAppointments = [];
+        let allPatients = [];
+        let allPrescriptions = [];
+        let filteredAppointments = [];
+        
+        // Make functions globally available
+        window.viewTodayAppointments = viewTodayAppointments;
+        window.viewAllPatients = viewAllPatients;
+        window.createPrescriptionModal = createPrescriptionModal;
+        window.viewPrescriptions = viewPrescriptions;
+        window.viewAllAppointments = viewAllAppointments;
+        window.closeModal = closeModal;
+        window.filterDoctorAppointments = filterDoctorAppointments;
+        window.completeAppointmentAction = completeAppointmentAction;
+        window.cancelAppointmentAction = cancelAppointmentAction;
+        window.viewPatientDetails = viewPatientDetails;
+        
+        // Initialize dashboard
+        async function initializeDashboard() {
+            try {
+                // Check authentication
+                const token = getAuthToken();
+                const userData = getUserData();
+                
+                if (!token || !userData || getRole() !== 'doctor') {
+                    showAlert('Please login as a doctor to access this page.', 'danger');
+                    setTimeout(() => redirectTo('/'), 2000);
+                    return;
+                }
+                
+                currentDoctor = userData;
+                updateDoctorName(userData.name);
+                
+                // Load dashboard data
+                await Promise.all([
+                    loadDoctorStats(),
+                    loadTodayAppointments(),
+                    loadRecentPatients()
+                ]);
+                
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+                showAlert('Failed to load dashboard. Please refresh the page.', 'danger');
+            }
+        }
+        
+        function updateDoctorName(name) {
+            const nameElement = document.getElementById('doctorName');
+            if (nameElement) {
+                nameElement.textContent = name;
+            }
+        }
+        
+        async function loadDoctorStats() {
+            try {
+                const result = await getDoctorStats(currentDoctor.id);
+                
+                if (result.success) {
+                    const stats = result.data;
+                    document.getElementById('todayAppointmentsCount').textContent = stats.todayAppointments || 0;
+                    document.getElementById('totalPatientsCount').textContent = stats.totalPatients || 0;
+                    document.getElementById('completedAppointmentsCount').textContent = stats.completedAppointments || 0;
+                    document.getElementById('prescriptionsIssuedCount').textContent = stats.prescriptionsIssued || 0;
+                }
+                
+            } catch (error) {
+                console.error('Error loading doctor stats:', error);
+            }
+        }
+        
+        async function loadTodayAppointments() {
+            try {
+                const result = await getTodayAppointments(currentDoctor.id);
+                
+                if (result.success) {
+                    renderTodayAppointments(result.data);
+                } else {
+                    document.getElementById('todayAppointments').innerHTML = 
+                        '<p class="text-muted">No appointments for today.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading today appointments:', error);
+                document.getElementById('todayAppointments').innerHTML = 
+                    '<p class="text-danger">Failed to load appointments.</p>';
+            }
+        }
+        
+        function renderTodayAppointments(appointments) {
+            const container = document.getElementById('todayAppointments');
+            
+            if (appointments.length === 0) {
+                container.innerHTML = '<p class="text-muted">No appointments scheduled for today.</p>';
+                return;
+            }
+            
+            const appointmentsHtml = appointments.map(appointment => `
+                <div class="appointment-item">
+                    <div class="appointment-info">
+                        <h5>${appointment.patientName}</h5>
+                        <p><strong>Time:</strong> ${formatAppointmentTime(appointment.appointmentTime).time}</p>
+                        <p><strong>Email:</strong> ${appointment.patientEmail}</p>
+                        <span class="badge ${getAppointmentStatusClass(appointment.status)}">
+                            ${getAppointmentStatusText(appointment.status)}
+                        </span>
+                    </div>
+                    ${appointment.status === 0 ? `
+                        <div class="appointment-actions">
+                            <button class="btn btn-sm btn-success" onclick="completeAppointmentAction(${appointment.id})">
+                                Complete
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="cancelAppointmentAction(${appointment.id})">
+                                Cancel
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+            
+            container.innerHTML = appointmentsHtml;
+        }
+        
+        async function loadRecentPatients() {
+            try {
+                const result = await getDoctorPatients(currentDoctor.id);
+                
+                if (result.success) {
+                    allPatients = result.data;
+                    const recentPatients = result.data.slice(0, 5);
+                    renderRecentPatients(recentPatients);
+                    populatePatientSelect(result.data);
+                } else {
+                    document.getElementById('recentPatients').innerHTML = 
+                        '<p class="text-muted">No patients found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading recent patients:', error);
+                document.getElementById('recentPatients').innerHTML = 
+                    '<p class="text-danger">Failed to load patients.</p>';
+            }
+        }
+        
+        function renderRecentPatients(patients) {
+            const container = document.getElementById('recentPatients');
+            
+            if (patients.length === 0) {
+                container.innerHTML = '<p class="text-muted">No patients found.</p>';
+                return;
+            }
+            
+            const patientsHtml = patients.map(patient => `
+                <div class="patient-card">
+                    <div class="patient-info">
+                        <h5>${patient.name}</h5>
+                        <p class="text-muted">${patient.email}</p>
+                        <p class="text-muted">${patient.phone}</p>
+                    </div>
+                    <div class="patient-actions">
+                        <button class="btn btn-primary btn-sm" onclick="viewPatientDetails(${patient.id})">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = patientsHtml;
+        }
+        
+        function populatePatientSelect(patients) {
+            const select = document.getElementById('prescriptionPatient');
+            select.innerHTML = '<option value="">Choose a patient...</option>';
+            
+            patients.forEach(patient => {
+                const option = document.createElement('option');
+                option.value = patient.id;
+                option.textContent = `${patient.name} - ${patient.email}`;
+                select.appendChild(option);
+            });
+        }
+        
+        // Modal functions
+        function viewTodayAppointments() {
+            loadTodayAppointments();
+        }
+        
+        function viewAllPatients() {
+            showModal('patientsModal');
+            loadAllPatients();
+        }
+        
+        function createPrescriptionModal() {
+            showModal('createPrescriptionModal');
+        }
+        
+        function viewPrescriptions() {
+            showModal('prescriptionsModal');
+            loadAllPrescriptions();
+        }
+        
+        function viewAllAppointments() {
+            showModal('appointmentsModal');
+            loadAllAppointments();
+        }
+        
+        function closeModal() {
+            closeAllModals();
+        }
+        
+        async function loadAllAppointments() {
+            try {
+                const result = await getDoctorAppointments(currentDoctor.id);
+                
+                if (result.success) {
+                    allAppointments = result.data;
+                    filteredAppointments = allAppointments;
+                    renderAllAppointments(filteredAppointments);
+                } else {
+                    document.getElementById('allAppointmentsList').innerHTML = 
+                        '<p class="text-muted">No appointments found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                document.getElementById('allAppointmentsList').innerHTML = 
+                    '<p class="text-danger">Failed to load appointments.</p>';
+            }
+        }
+        
+        function renderAllAppointments(appointments) {
+            const container = document.getElementById('allAppointmentsList');
+            
+            if (appointments.length === 0) {
+                container.innerHTML = '<p class="text-muted">No appointments found.</p>';
+                return;
+            }
+            
+            const appointmentsHtml = appointments.map(appointment => `
+                <div class="appointment-card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h6>${appointment.patientName}</h6>
+                                <p><strong>Date:</strong> ${formatAppointmentTime(appointment.appointmentTime).full}</p>
+                                <p><strong>Email:</strong> ${appointment.patientEmail}</p>
+                                <span class="badge ${getAppointmentStatusClass(appointment.status)}">
+                                    ${getAppointmentStatusText(appointment.status)}
+                                </span>
+                            </div>
+                            <div class="col-4 text-right">
+                                ${appointment.status === 0 ? `
+                                    <button class="btn btn-sm btn-success mb-1" onclick="completeAppointmentAction(${appointment.id})">
+                                        Complete
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="cancelAppointmentAction(${appointment.id})">
+                                        Cancel
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = appointmentsHtml;
+        }
+        
+        async function loadAllPatients() {
+            try {
+                const result = await getDoctorPatients(currentDoctor.id);
+                
+                if (result.success) {
+                    renderAllPatients(result.data);
+                } else {
+                    document.getElementById('allPatientsList').innerHTML = 
+                        '<p class="text-muted">No patients found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading patients:', error);
+                document.getElementById('allPatientsList').innerHTML = 
+                    '<p class="text-danger">Failed to load patients.</p>';
+            }
+        }
+        
+        function renderAllPatients(patients) {
+            const container = document.getElementById('allPatientsList');
+            
+            if (patients.length === 0) {
+                container.innerHTML = '<p class="text-muted">No patients found.</p>';
+                return;
+            }
+            
+            const patientsHtml = patients.map(patient => `
+                <div class="patient-card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h6>${patient.name}</h6>
+                                <p><strong>Email:</strong> ${patient.email}</p>
+                                <p><strong>Phone:</strong> ${patient.phone}</p>
+                                <p><strong>Date of Birth:</strong> ${formatDate(patient.dateOfBirth)}</p>
+                            </div>
+                            <div class="col-4 text-right">
+                                <button class="btn btn-primary btn-sm" onclick="viewPatientDetails(${patient.id})">
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = patientsHtml;
+        }
+        
+        async function loadAllPrescriptions() {
+            try {
+                const result = await getDoctorPrescriptions(currentDoctor.id);
+                
+                if (result.success) {
+                    renderPrescriptionsList(result.data);
+                } else {
+                    document.getElementById('prescriptionsList').innerHTML = 
+                        '<p class="text-muted">No prescriptions found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                document.getElementById('prescriptionsList').innerHTML = 
+                    '<p class="text-danger">Failed to load prescriptions.</p>';
+            }
+        }
+        
+        function renderPrescriptionsList(prescriptions) {
+            const container = document.getElementById('prescriptionsList');
+            
+            if (prescriptions.length === 0) {
+                container.innerHTML = '<p class="text-muted">No prescriptions found.</p>';
+                return;
+            }
+            
+            const prescriptionsHtml = prescriptions.map(prescription => `
+                <div class="prescription-card mb-3">
+                    <div class="card-body">
+                        <h6>${prescription.medication}</h6>
+                        <p><strong>Patient:</strong> ${prescription.patientName}</p>
+                        <p><strong>Dosage:</strong> ${prescription.dosage}</p>
+                        <p><strong>Frequency:</strong> ${prescription.frequency}</p>
+                        <p><strong>Date:</strong> ${formatDate(prescription.prescriptionDate)}</p>
+                        ${prescription.notes ? `<p><strong>Notes:</strong> ${prescription.notes}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = prescriptionsHtml;
+        }
+        
+        // Filter functions
+        function filterDoctorAppointments(filter) {
+            // Update active filter button
+            document.querySelectorAll('.appointment-filters .btn').forEach(btn => 
+                btn.classList.remove('btn-primary'));
+            document.getElementById(`filter${capitalizeFirst(filter === 'all' ? 'AllAppts' : capitalizeFirst(filter))}`).classList.add('btn-primary');
+            
+            switch (filter) {
+                case 'scheduled':
+                    filteredAppointments = allAppointments.filter(apt => apt.status === 0);
+                    break;
+                case 'completed':
+                    filteredAppointments = allAppointments.filter(apt => apt.status === 1);
+                    break;
+                case 'cancelled':
+                    filteredAppointments = allAppointments.filter(apt => apt.status === 2);
+                    break;
+                default:
+                    filteredAppointments = allAppointments;
+            }
+            
+            renderAllAppointments(filteredAppointments);
+        }
+        
+        // Appointment actions
+        async function completeAppointmentAction(appointmentId) {
+            if (!confirm('Mark this appointment as completed?')) {
+                return;
+            }
+            
+            try {
+                const result = await completeAppointment(appointmentId);
+                
+                if (result.success) {
+                    showAlert('Appointment marked as completed!', 'success');
+                    await loadDoctorStats();
+                    await loadTodayAppointments();
+                    if (document.getElementById('appointmentsModal').classList.contains('show')) {
+                        await loadAllAppointments();
+                    }
+                } else {
+                    showAlert(result.message || 'Failed to complete appointment.', 'danger');
+                }
+            } catch (error) {
+                console.error('Error completing appointment:', error);
+                showAlert('An error occurred while completing the appointment.', 'danger');
+            }
+        }
+        
+        async function cancelAppointmentAction(appointmentId) {
+            if (!confirm('Cancel this appointment?')) {
+                return;
+            }
+            
+            try {
+                const result = await updateAppointmentStatus(appointmentId, 2, 'Cancelled by doctor');
+                
+                if (result.success) {
+                    showAlert('Appointment cancelled!', 'success');
+                    await loadDoctorStats();
+                    await loadTodayAppointments();
+                    if (document.getElementById('appointmentsModal').classList.contains('show')) {
+                        await loadAllAppointments();
+                    }
+                } else {
+                    showAlert(result.message || 'Failed to cancel appointment.', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+                showAlert('An error occurred while cancelling the appointment.', 'danger');
+            }
+        }
+        
+        // Patient details
+        async function viewPatientDetails(patientId) {
+            try {
+                showModal('patientDetailsModal');
+                
+                const result = await getPatientDetails(patientId);
+                
+                if (result.success) {
+                    const patient = result.data;
+                    const detailsHtml = `
+                        <div class="patient-details">
+                            <h4>${patient.name}</h4>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p><strong>Email:</strong> ${patient.email}</p>
+                                    <p><strong>Phone:</strong> ${patient.phone}</p>
+                                    <p><strong>Date of Birth:</strong> ${formatDate(patient.dateOfBirth)}</p>
+                                    <p><strong>Gender:</strong> ${patient.gender || 'Not specified'}</p>
+                                </div>
+                                <div class="col-6">
+                                    <p><strong>Address:</strong> ${patient.address || 'Not provided'}</p>
+                                    <p><strong>Emergency Contact:</strong> ${patient.emergencyContact || 'Not provided'}</p>
+                                    <p><strong>Blood Type:</strong> ${patient.bloodType || 'Not specified'}</p>
+                                    <p><strong>Allergies:</strong> ${patient.allergies || 'None reported'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('patientDetailsContent').innerHTML = detailsHtml;
+                } else {
+                    document.getElementById('patientDetailsContent').innerHTML = 
+                        '<p class="text-danger">Failed to load patient details.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading patient details:', error);
+                document.getElementById('patientDetailsContent').innerHTML = 
+                    '<p class="text-danger">An error occurred while loading patient details.</p>';
+            }
+        }
+        
+        // Search functionality
+        function setupSearchAndFilters() {
+            const patientSearch = document.getElementById('patientSearch');
+            const allPatientsSearch = document.getElementById('allPatientsSearch');
+            
+            if (patientSearch) {
+                patientSearch.addEventListener('input', debounce(searchRecentPatients, 300));
+            }
+            
+            if (allPatientsSearch) {
+                allPatientsSearch.addEventListener('input', debounce(searchAllPatients, 300));
+            }
+        }
+        
+        function searchRecentPatients() {
+            const searchTerm = document.getElementById('patientSearch').value.toLowerCase();
+            
+            if (!searchTerm) {
+                loadRecentPatients();
+                return;
+            }
+            
+            const filtered = allPatients.filter(patient => 
+                patient.name.toLowerCase().includes(searchTerm) ||
+                patient.email.toLowerCase().includes(searchTerm) ||
+                patient.phone.includes(searchTerm)
+            ).slice(0, 5);
+            
+            renderRecentPatients(filtered);
+        }
+        
+        function searchAllPatients() {
+            const searchTerm = document.getElementById('allPatientsSearch').value.toLowerCase();
+            
+            if (!searchTerm) {
+                loadAllPatients();
+                return;
+            }
+            
+            const filtered = allPatients.filter(patient => 
+                patient.name.toLowerCase().includes(searchTerm) ||
+                patient.email.toLowerCase().includes(searchTerm) ||
+                patient.phone.includes(searchTerm)
+            );
+            
+            renderAllPatients(filtered);
+        }
+        
+        // Form event listeners
+        document.getElementById('prescriptionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const patientId = document.getElementById('prescriptionPatient').value;
+            const medication = document.getElementById('prescriptionMedication').value;
+            const dosage = document.getElementById('prescriptionDosage').value;
+            const frequency = document.getElementById('prescriptionFrequency').value;
+            const notes = document.getElementById('prescriptionNotes').value;
+            
+            if (!patientId || !medication || !dosage || !frequency) {
+                showAlert('Please fill in all required fields.', 'warning');
+                return;
+            }
+            
+            try {
+                const result = await createPrescription({
+                    patientId: parseInt(patientId),
+                    doctorId: currentDoctor.id,
+                    medication: medication,
+                    dosage: dosage,
+                    frequency: frequency,
+                    notes: notes
+                });
+                
+                if (result.success) {
+                    showAlert('Prescription created successfully!', 'success');
+                    closeModal();
+                    clearForm('prescriptionForm');
+                    await loadDoctorStats();
+                } else {
+                    showAlert(result.message || 'Failed to create prescription.', 'danger');
+                }
+            } catch (error) {
+                console.error('Error creating prescription:', error);
+                showAlert('An error occurred while creating the prescription.', 'danger');
+            }
+        });
+        
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            setupSearchAndFilters();
+        });
+        
+    </script>
+</body>
+</html>

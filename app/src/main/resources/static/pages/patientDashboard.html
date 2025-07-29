@@ -1,53 +1,750 @@
-<!-- patientDashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="../assets/images/logo/logo.png" />
-    <title>PatientDashboard</title>
-    <link rel="stylesheet" href="../assets/css/adminDashboard.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - Smart Clinic</title>
+    <link rel="icon" type="image/png" href="../assets/images/logo/logo.png" />
+    
+    <!-- CSS Stylesheets -->
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/patientDashboard.css">
-    <script src="../js/render.js" defer></script>
+    
+    <!-- JavaScript Files -->
     <script src="../js/util.js" defer></script>
     <script src="../js/components/header.js" defer></script>
     <script src="../js/components/footer.js" defer></script>
-    <script type="module" src="../js/components/modals.js"></script>
+    <script src="../js/components/modals.js" defer></script>
 </head>
-
-<body onload="renderContent()">
-    <div class="container">
-        <div class="wrapper">
-            <div id="header"></div>
-            <main class="main-content">
-                <input type="text" id="searchBar" class="searchBar" placeholder="Search Bar for custom output" />
-                <div class="filter-wrapper">
-                    <select class="filter-select" id="filterTime">
-                        <option value="">Sort by Time</option>
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
-                    </select>
-                    <select class="filter-select" id="filterSpecialty">
-                        <option value="">Filter by Specialty</option>
-                        <option value="Cardiologist">Cardiologist</option>
-                        <option value="Dermatologist">Dermatologist</option>
-                        <option value="Neurologist">Neurologist</option>
-                        <option value="Pediatrician">Pediatrician</option>
-                        <option value="Orthopedic">Orthopedic</option>
-                        <option value="Gynecologist">Gynecologist</option>
-                        <option value="Psychiatrist">Psychiatrist</option>
-                        <option value="Dentist">Dentist</option>
-                        <option value="Ophthalmologist">Ophthalmologist</option>
-                        <option value="Ent">ENT Specialist</option>
-                        <option value="Urologist">Urologist</option>
-                        <option value="Oncologist">Oncologist</option>
-                        <option value="Gastroenterologist">Gastroenterologist</option>
-                        <option value="General">General Physician</option>
-                    </select>
+<body>
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+    
+    <!-- Header Section -->
+    <div id="header"></div>
+    
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Welcome Section -->
+        <section class="welcome-section">
+            <div class="card">
+                <div class="card-body">
+                    <h1>Welcome, <span id="patientName">Patient</span>!</h1>
+                    <p class="text-muted">Manage your health appointments and medical records</p>
                 </div>
-                <div id="content"></div>
-            </main>
+            </div>
+        </section>
+        
+        <!-- Quick Stats -->
+        <section class="stats-section">
+            <div class="row">
+                <div class="col-4">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <div class="stats-icon text-primary">📅</div>
+                            <h3 id="upcomingCount">0</h3>
+                            <p>Upcoming Appointments</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <div class="stats-icon text-success">✅</div>
+                            <h3 id="completedCount">0</h3>
+                            <p>Completed Visits</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <div class="stats-icon text-warning">💊</div>
+                            <h3 id="prescriptionCount">0</h3>
+                            <p>Active Prescriptions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Quick Actions -->
+        <section class="actions-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-3">
+                            <button class="btn btn-primary btn-lg" onclick="showBookAppointmentModal()">
+                                📅 Book Appointment
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-secondary btn-lg" onclick="viewAppointments()">
+                                📋 My Appointments
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-success btn-lg" onclick="viewPrescriptions()">
+                                💊 Prescriptions
+                            </button>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-warning btn-lg" onclick="findDoctors()">
+                                👨‍⚕️ Find Doctors
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Recent Appointments -->
+        <section class="appointments-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Recent Appointments</h3>
+                    <button class="btn btn-outline btn-sm" onclick="viewAllAppointments()">View All</button>
+                </div>
+                <div class="card-body">
+                    <div id="recentAppointments">
+                        <div class="text-center">
+                            <div class="spinner"></div>
+                            <p>Loading appointments...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Available Doctors -->
+        <section class="doctors-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Available Doctors</h3>
+                    <div class="search-filter">
+                        <input type="text" id="doctorSearch" class="form-control" placeholder="Search doctors..." style="width: 200px; display: inline-block;">
+                        <select id="specialtyFilter" class="form-control form-select" style="width: 150px; display: inline-block; margin-left: 10px;">
+                            <option value="">All Specialties</option>
+                            <option value="Cardiology">Cardiology</option>
+                            <option value="Pediatrics">Pediatrics</option>
+                            <option value="Dermatology">Dermatology</option>
+                            <option value="Orthopedics">Orthopedics</option>
+                            <option value="Neurology">Neurology</option>
+                            <option value="Psychiatry">Psychiatry</option>
+                            <option value="Gynecology">Gynecology</option>
+                            <option value="Urology">Urology</option>
+                            <option value="Oncology">Oncology</option>
+                            <option value="Family Medicine">Family Medicine</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="doctorsList">
+                        <div class="text-center">
+                            <div class="spinner"></div>
+                            <p>Loading doctors...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer Section -->
+    <div id="footer"></div>
+    
+    <!-- Book Appointment Modal -->
+    <div id="bookAppointmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Book New Appointment</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="appointmentForm">
+                    <div class="form-group">
+                        <label for="appointmentDoctor" class="form-label">Select Doctor</label>
+                        <select id="appointmentDoctor" class="form-control form-select" required>
+                            <option value="">Choose a doctor...</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentDate" class="form-label">Appointment Date</label>
+                        <input type="date" id="appointmentDate" class="form-control" required>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentTime" class="form-label">Available Times</label>
+                        <select id="appointmentTime" class="form-control form-select" required disabled>
+                            <option value="">Select date first...</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentNotes" class="form-label">Notes (Optional)</label>
+                        <textarea id="appointmentNotes" class="form-control" rows="3" placeholder="Describe your symptoms or reason for visit..."></textarea>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Book Appointment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Appointments Modal -->
+    <div id="appointmentsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>My Appointments</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="appointment-filters mb-3">
+                    <button class="btn btn-sm btn-outline" onclick="filterAppointments('all')" id="filterAll">All</button>
+                    <button class="btn btn-sm btn-outline" onclick="filterAppointments('upcoming')" id="filterUpcoming">Upcoming</button>
+                    <button class="btn btn-sm btn-outline" onclick="filterAppointments('completed')" id="filterCompleted">Completed</button>
+                </div>
+                <div id="appointmentsList">
+                    <div class="text-center">
+                        <div class="spinner"></div>
+                        <p>Loading appointments...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Prescriptions Modal -->
+    <div id="prescriptionsModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>My Prescriptions</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="prescriptionsList">
+                    <div class="text-center">
+                        <div class="spinner"></div>
+                        <p>Loading prescriptions...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Import services
+        import { 
+            getPatientProfile, 
+            getPatientAppointments, 
+            getPatientPrescriptions,
+            getAvailableDoctors,
+            getDoctorAvailability,
+            bookAppointment,
+            cancelAppointment
+        } from '../js/services/patientServices.js';
+        
+        // Global variables
+        let currentPatient = null;
+        let allDoctors = [];
+        let allAppointments = [];
+        let allPrescriptions = [];
+        let filteredAppointments = [];
+        
+        // Make functions globally available
+        window.showBookAppointmentModal = showBookAppointmentModal;
+        window.viewAppointments = viewAppointments;
+        window.viewPrescriptions = viewPrescriptions;
+        window.findDoctors = findDoctors;
+        window.viewAllAppointments = viewAllAppointments;
+        window.closeModal = closeModal;
+        window.filterAppointments = filterAppointments;
+        window.bookAppointmentFromDoctor = bookAppointmentFromDoctor;
+        window.cancelPatientAppointment = cancelPatientAppointment;
+        
+        // Initialize dashboard
+        async function initializeDashboard() {
+            try {
+                // Check authentication
+                const token = getAuthToken();
+                const userData = getUserData();
+                
+                if (!token || !userData || getRole() !== 'patient') {
+                    showAlert('Please login as a patient to access this page.', 'danger');
+                    setTimeout(() => redirectTo('/'), 2000);
+                    return;
+                }
+                
+                currentPatient = userData;
+                updatePatientName(userData.name);
+                
+                // Load dashboard data
+                await Promise.all([
+                    loadPatientStats(),
+                    loadRecentAppointments(),
+                    loadAvailableDoctors()
+                ]);
+                
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+                showAlert('Failed to load dashboard. Please refresh the page.', 'danger');
+            }
+        }
+        
+        function updatePatientName(name) {
+            const nameElement = document.getElementById('patientName');
+            if (nameElement) {
+                nameElement.textContent = name;
+            }
+        }
+        
+        async function loadPatientStats() {
+            try {
+                const [appointmentsResult, prescriptionsResult] = await Promise.all([
+                    getPatientAppointments(currentPatient.id),
+                    getPatientPrescriptions(currentPatient.id)
+                ]);
+                
+                if (appointmentsResult.success) {
+                    allAppointments = appointmentsResult.data;
+                    const upcoming = allAppointments.filter(apt => apt.status === 0).length;
+                    const completed = allAppointments.filter(apt => apt.status === 1).length;
+                    
+                    document.getElementById('upcomingCount').textContent = upcoming;
+                    document.getElementById('completedCount').textContent = completed;
+                }
+                
+                if (prescriptionsResult.success) {
+                    allPrescriptions = prescriptionsResult.data;
+                    document.getElementById('prescriptionCount').textContent = allPrescriptions.length;
+                }
+                
+            } catch (error) {
+                console.error('Error loading patient stats:', error);
+            }
+        }
+        
+        async function loadRecentAppointments() {
+            try {
+                const result = await getPatientAppointments(currentPatient.id);
+                
+                if (result.success) {
+                    const recentAppointments = result.data
+                        .sort((a, b) => new Date(b.appointmentTime) - new Date(a.appointmentTime))
+                        .slice(0, 5);
+                    
+                    renderRecentAppointments(recentAppointments);
+                } else {
+                    document.getElementById('recentAppointments').innerHTML = 
+                        '<p class="text-muted">No appointments found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading recent appointments:', error);
+                document.getElementById('recentAppointments').innerHTML = 
+                    '<p class="text-danger">Failed to load appointments.</p>';
+            }
+        }
+        
+        function renderRecentAppointments(appointments) {
+            const container = document.getElementById('recentAppointments');
+            
+            if (appointments.length === 0) {
+                container.innerHTML = '<p class="text-muted">No recent appointments.</p>';
+                return;
+            }
+            
+            const appointmentsHtml = appointments.map(appointment => `
+                <div class="appointment-item">
+                    <div class="appointment-info">
+                        <h5>${appointment.doctorName}</h5>
+                        <p class="text-muted">${appointment.doctorSpecialty}</p>
+                        <p><strong>Date:</strong> ${formatDateTime(appointment.appointmentTime)}</p>
+                        <span class="badge ${getAppointmentStatusClass(appointment.status)}">
+                            ${getAppointmentStatusText(appointment.status)}
+                        </span>
+                    </div>
+                    ${appointment.status === 0 ? `
+                        <div class="appointment-actions">
+                            <button class="btn btn-sm btn-warning" onclick="rescheduleAppointment(${appointment.id})">
+                                Reschedule
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="cancelPatientAppointment(${appointment.id})">
+                                Cancel
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+            
+            container.innerHTML = appointmentsHtml;
+        }
+        
+        async function loadAvailableDoctors() {
+            try {
+                const result = await getAvailableDoctors();
+                
+                if (result.success) {
+                    allDoctors = result.data;
+                    renderDoctorsList(allDoctors);
+                    populateDoctorSelect(allDoctors);
+                } else {
+                    document.getElementById('doctorsList').innerHTML = 
+                        '<p class="text-muted">No doctors available.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+                document.getElementById('doctorsList').innerHTML = 
+                    '<p class="text-danger">Failed to load doctors.</p>';
+            }
+        }
+        
+        function renderDoctorsList(doctors) {
+            const container = document.getElementById('doctorsList');
+            
+            if (doctors.length === 0) {
+                container.innerHTML = '<p class="text-muted">No doctors found.</p>';
+                return;
+            }
+            
+            const doctorsHtml = doctors.map(doctor => `
+                <div class="doctor-card">
+                    <div class="doctor-info">
+                        <h5>${doctor.name}</h5>
+                        <p class="text-primary">${doctor.specialty}</p>
+                        <p class="text-muted">${doctor.email}</p>
+                        <p class="text-muted">${doctor.phone}</p>
+                    </div>
+                    <div class="doctor-actions">
+                        <button class="btn btn-primary btn-sm" onclick="bookAppointmentFromDoctor(${doctor.id})">
+                            Book Appointment
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = doctorsHtml;
+        }
+        
+        function populateDoctorSelect(doctors) {
+            const select = document.getElementById('appointmentDoctor');
+            select.innerHTML = '<option value="">Choose a doctor...</option>';
+            
+            doctors.forEach(doctor => {
+                const option = document.createElement('option');
+                option.value = doctor.id;
+                option.textContent = `${doctor.name} - ${doctor.specialty}`;
+                select.appendChild(option);
+            });
+        }
+        
+        // Modal functions
+        function showBookAppointmentModal() {
+            showModal('bookAppointmentModal');
+        }
+        
+        function viewAppointments() {
+            showModal('appointmentsModal');
+            loadAllAppointments();
+        }
+        
+        function viewPrescriptions() {
+            showModal('prescriptionsModal');
+            loadAllPrescriptions();
+        }
+        
+        function findDoctors() {
+            document.querySelector('.doctors-section').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function viewAllAppointments() {
+            viewAppointments();
+        }
+        
+        function closeModal() {
+            closeAllModals();
+        }
+        
+        async function loadAllAppointments() {
+            try {
+                const result = await getPatientAppointments(currentPatient.id);
+                
+                if (result.success) {
+                    allAppointments = result.data;
+                    filteredAppointments = allAppointments;
+                    renderAppointmentsList(filteredAppointments);
+                } else {
+                    document.getElementById('appointmentsList').innerHTML = 
+                        '<p class="text-muted">No appointments found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                document.getElementById('appointmentsList').innerHTML = 
+                    '<p class="text-danger">Failed to load appointments.</p>';
+            }
+        }
+        
+        function renderAppointmentsList(appointments) {
+            const container = document.getElementById('appointmentsList');
+            
+            if (appointments.length === 0) {
+                container.innerHTML = '<p class="text-muted">No appointments found.</p>';
+                return;
+            }
+            
+            const appointmentsHtml = appointments.map(appointment => `
+                <div class="appointment-card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h6>${appointment.doctorName}</h6>
+                                <p class="text-muted">${appointment.doctorSpecialty}</p>
+                                <p><strong>Date:</strong> ${formatDateTime(appointment.appointmentTime)}</p>
+                                <span class="badge ${getAppointmentStatusClass(appointment.status)}">
+                                    ${getAppointmentStatusText(appointment.status)}
+                                </span>
+                            </div>
+                            <div class="col-4 text-right">
+                                ${appointment.status === 0 ? `
+                                    <button class="btn btn-sm btn-warning mb-1" onclick="rescheduleAppointment(${appointment.id})">
+                                        Reschedule
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="cancelPatientAppointment(${appointment.id})">
+                                        Cancel
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = appointmentsHtml;
+        }
+        
+        async function loadAllPrescriptions() {
+            try {
+                const result = await getPatientPrescriptions(currentPatient.id);
+                
+                if (result.success) {
+                    renderPrescriptionsList(result.data);
+                } else {
+                    document.getElementById('prescriptionsList').innerHTML = 
+                        '<p class="text-muted">No prescriptions found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                document.getElementById('prescriptionsList').innerHTML = 
+                    '<p class="text-danger">Failed to load prescriptions.</p>';
+            }
+        }
+        
+        function renderPrescriptionsList(prescriptions) {
+            const container = document.getElementById('prescriptionsList');
+            
+            if (prescriptions.length === 0) {
+                container.innerHTML = '<p class="text-muted">No prescriptions found.</p>';
+                return;
+            }
+            
+            const prescriptionsHtml = prescriptions.map(prescription => `
+                <div class="prescription-card mb-3">
+                    <div class="card-body">
+                        <h6>${prescription.medication}</h6>
+                        <p><strong>Dosage:</strong> ${prescription.dosage}</p>
+                        <p><strong>Prescribed by:</strong> ${prescription.doctorName}</p>
+                        <p><strong>Date:</strong> ${formatDate(prescription.prescriptionDate)}</p>
+                        ${prescription.doctorNotes ? `<p><strong>Notes:</strong> ${prescription.doctorNotes}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = prescriptionsHtml;
+        }
+        
+        // Filter functions
+        function filterAppointments(filter) {
+            // Update active filter button
+            document.querySelectorAll('.appointment-filters .btn').forEach(btn => 
+                btn.classList.remove('btn-primary'));
+            document.getElementById(`filter${capitalizeFirst(filter)}`).classList.add('btn-primary');
+            
+            switch (filter) {
+                case 'upcoming':
+                    filteredAppointments = allAppointments.filter(apt => apt.status === 0);
+                    break;
+                case 'completed':
+                    filteredAppointments = allAppointments.filter(apt => apt.status === 1);
+                    break;
+                default:
+                    filteredAppointments = allAppointments;
+            }
+            
+            renderAppointmentsList(filteredAppointments);
+        }
+        
+        // Search and filter functions
+        function setupSearchAndFilters() {
+            const doctorSearch = document.getElementById('doctorSearch');
+            const specialtyFilter = document.getElementById('specialtyFilter');
+            
+            if (doctorSearch) {
+                doctorSearch.addEventListener('input', debounce(filterDoctors, 300));
+            }
+            
+            if (specialtyFilter) {
+                specialtyFilter.addEventListener('change', filterDoctors);
+            }
+        }
+        
+        function filterDoctors() {
+            const searchTerm = document.getElementById('doctorSearch').value.toLowerCase();
+            const selectedSpecialty = document.getElementById('specialtyFilter').value;
+            
+            let filtered = allDoctors;
+            
+            if (searchTerm) {
+                filtered = filtered.filter(doctor => 
+                    doctor.name.toLowerCase().includes(searchTerm) ||
+                    doctor.specialty.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (selectedSpecialty) {
+                filtered = filtered.filter(doctor => doctor.specialty === selectedSpecialty);
+            }
+            
+            renderDoctorsList(filtered);
+        }
+        
+        // Appointment booking functions
+        function bookAppointmentFromDoctor(doctorId) {
+            const doctorSelect = document.getElementById('appointmentDoctor');
+            doctorSelect.value = doctorId;
+            showBookAppointmentModal();
+        }
+        
+        async function cancelPatientAppointment(appointmentId) {
+            if (!confirm('Are you sure you want to cancel this appointment?')) {
+                return;
+            }
+            
+            try {
+                const result = await cancelAppointment(appointmentId);
+                
+                if (result.success) {
+                    showAlert('Appointment cancelled successfully!', 'success');
+                    await loadPatientStats();
+                    await loadRecentAppointments();
+                    if (document.getElementById('appointmentsModal').classList.contains('show')) {
+                        await loadAllAppointments();
+                    }
+                } else {
+                    showAlert(result.message || 'Failed to cancel appointment.', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+                showAlert('An error occurred while cancelling the appointment.', 'danger');
+            }
+        }
+        
+        // Form event listeners
+        document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const doctorId = document.getElementById('appointmentDoctor').value;
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('appointmentTime').value;
+            const notes = document.getElementById('appointmentNotes').value;
+            
+            if (!doctorId || !date || !time) {
+                showAlert('Please fill in all required fields.', 'warning');
+                return;
+            }
+            
+            try {
+                const appointmentDateTime = `${date} ${time}`;
+                const result = await bookAppointment({
+                    doctorId: parseInt(doctorId),
+                    patientId: currentPatient.id,
+                    appointmentTime: appointmentDateTime,
+                    notes: notes
+                });
+                
+                if (result.success) {
+                    showAlert('Appointment booked successfully!', 'success');
+                    closeModal();
+                    clearForm('appointmentForm');
+                    await loadPatientStats();
+                    await loadRecentAppointments();
+                } else {
+                    showAlert(result.message || 'Failed to book appointment.', 'danger');
+                }
+            } catch (error) {
+                console.error('Error booking appointment:', error);
+                showAlert('An error occurred while booking the appointment.', 'danger');
+            }
+        });
+        
+        // Date and time handling
+        document.getElementById('appointmentDate').addEventListener('change', async function() {
+            const doctorId = document.getElementById('appointmentDoctor').value;
+            const date = this.value;
+            const timeSelect = document.getElementById('appointmentTime');
+            
+            if (!doctorId || !date) {
+                timeSelect.disabled = true;
+                timeSelect.innerHTML = '<option value="">Select doctor and date first...</option>';
+                return;
+            }
+            
+            try {
+                const result = await getDoctorAvailability(doctorId, date);
+                
+                if (result.success && result.data.length > 0) {
+                    timeSelect.disabled = false;
+                    timeSelect.innerHTML = '<option value="">Choose time...</option>';
+                    
+                    result.data.forEach(slot => {
+                        if (slot.status === 'Available') {
+                            const option = document.createElement('option');
+                            option.value = slot.time;
+                            option.textContent = slot.time;
+                            timeSelect.appendChild(option);
+                        }
+                    });
+                } else {
+                    timeSelect.disabled = true;
+                    timeSelect.innerHTML = '<option value="">No available times</option>';
+                }
+            } catch (error) {
+                console.error('Error loading doctor availability:', error);
+                timeSelect.disabled = true;
+                timeSelect.innerHTML = '<option value="">Error loading times</option>';
+            }
+        });
+        
+        // Set minimum date to today
+        document.getElementById('appointmentDate').min = new Date().toISOString().split('T')[0];
+        
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            setupSearchAndFilters();
+        });
+        
+    </script>
+</body>
+</html>
             <div id="footer"></div>
         </div>
     </div>

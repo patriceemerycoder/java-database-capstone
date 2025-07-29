@@ -1,0 +1,49 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build Project",
+			"type": "shell",
+			"command": "${workspaceFolder}/app/mvnw.cmd",
+			"args": [
+				"clean",
+				"compile"
+			],
+			"group": "build",
+			"problemMatcher": ["$tsc"],
+			"isBackground": false,
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			}
+		},
+		{
+			"label": "Run Spring Boot Application",
+			"type": "shell",
+			"command": "${workspaceFolder}/app/mvnw.cmd",
+			"args": [
+				"spring-boot:run"
+			],
+			"group": "build",
+			"problemMatcher": [],
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			}
+		},
+		{
+			"label": "Package Application",
+			"type": "shell",
+			"command": "${workspaceFolder}/app/mvnw.cmd",
+			"args": [
+				"clean",
+				"package"
+			],
+			"group": "build",
+			"problemMatcher": ["$tsc"],
+			"isBackground": false,
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			}
+		}
+	]
+}
