@@ -70,7 +70,7 @@ END //
  
 DELIMITER ;
 
-## MongoDb Collections Design
+# MongoDb Collections Design
  
 {
   "prescription_id": "RX123456",
