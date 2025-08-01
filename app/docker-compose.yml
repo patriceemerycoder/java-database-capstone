@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  smart-clinic-app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:testdb
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    volumes:
+      - app-data:/app/data
+    restart: unless-stopped
+    container_name: smart-clinic
+    networks:
+      - smart-clinic-network
+
+  # Optional: Add a MySQL database service
+  # mysql-db:
+  #   image: mysql:8.0
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #     MYSQL_DATABASE: smart_clinic
+  #     MYSQL_USER: clinic_user
+  #     MYSQL_PASSWORD: clinic_password
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   restart: unless-stopped
+  #   container_name: smart-clinic-mysql
+  #   networks:
+  #     - smart-clinic-network
+
+volumes:
+  app-data:
+  # mysql-data:
+
+networks:
+  smart-clinic-network:
+    driver: bridge

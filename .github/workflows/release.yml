@@ -1,0 +1,83 @@
+name: Release Management
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: Build application
+      run: |
+        cd app
+        ./mvnw clean package -DskipTests
+        
+    - name: Generate changelog
+      id: changelog
+      run: |
+        echo "## Changes in this Release" > CHANGELOG.md
+        git log --pretty=format:"* %s (%h)" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "## Docker Images" >> CHANGELOG.md
+        echo "* \`docker pull ${{ secrets.DOCKER_USERNAME }}/smart-clinic:${GITHUB_REF#refs/tags/}\`" >> CHANGELOG.md
+        echo "* \`docker pull ghcr.io/${{ github.repository_owner }}/smart-clinic:${GITHUB_REF#refs/tags/}\`" >> CHANGELOG.md
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          app/target/*.jar
+          docker-compose.yml
+          app/Dockerfile
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        generate_release_notes: true
+        
+  update-documentation:
+    runs-on: ubuntu-latest
+    needs: create-release
+    name: Update Documentation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Update version in README
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        sed -i "s/smart-clinic:[^)]*/smart-clinic:$VERSION/g" README.md
+        
+    - name: Commit version update
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git commit -m "docs: update version to ${GITHUB_REF#refs/tags/}" || exit 0
+        git push origin HEAD:main || echo "No changes to push"

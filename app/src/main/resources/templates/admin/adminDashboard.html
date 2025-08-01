@@ -1,109 +1,261 @@
-<!-- adminDashboard.html -->
-
-<!-- 
-Step-by-Step Explanation of `adminDashboard.html`
-This file creates the Admin Dashboard interface for managing doctor-related data 
-with search, filter, and modal functionality.
-
-
-1. Declare the Document Type
-
-   * Use `<!DOCTYPE html>` to ensure HTML5 standards for consistent rendering across browsers.
-
-2. Begin the HTML Document with Thymeleaf Namespace
-
-   * Add the `<html>` tag with `xmlns:th="http://www.thymeleaf.org"` to allow Thymeleaf-specific attributes in Spring-based apps.
-
-3. Head Section – Metadata and Resources
-
-   * Open the `<head>` section for meta info and links to assets and scripts.
-
-4. Set Character Encoding
-
-   * Use UTF-8 to support all characters and prevent encoding issues.
-
-5. Set the Favicon
-
-   * Add a favicon for browser tabs using Thymeleaf pathing: 
-     `<link rel="icon" type="image/png" th:href="@{/assets/images/logo/logo.png}" />`.
-
-6. Set the Page Title
-
-   * Give the page a title, e.g., `"Admin Dashboard"`, which will show in the browser tab.
-
-7. Link CSS Stylesheets
-
-   * Include dashboard-specific styles and global site-wide styles:
-     - `adminDashboard.css` for layout and design of this page.
-     - `style.css` for shared UI components.
-
-8. Link JavaScript Files (with `defer`)
-
-   * Use Thymeleaf's `th:src` to include JS components and utilities:
-     - `render.js` (rendering content)
-     - `util.js` (utility functions)
-     - `header.js` and `footer.js` (for dynamic header/footer)
-   * Use `defer` so scripts execute after the HTML is fully parsed.
-
-9. Close the Head and Begin the Body
-
-    * Start the visible part of the webpage. `onload="renderContent()"` is used to call a function when the page is ready.
-
-10. Create the Container
-
-    * Add a `div` with class `container` for layout control.
-
-11. Add a Wrapper Inside the Container
-
-    * Wrap page elements with a `wrapper` div to maintain consistent spacing and organization.
-
-12. Insert a Header Placeholder
-
-    * Add `<div id="header"></div>` for injecting the header via JavaScript.
-
-13. Define the Main Section
-
-    * Use `<main class="main-content">` for the central dashboard area.
-
-14. Add a Search Bar
-
-    * Add an input field with `id="searchBar"` for admin to search content dynamically.
-
-15. Add Filter Dropdowns
-
-    * Use two `<select>` elements:
-      - One for time (AM/PM).
-      - One for filtering by medical specialty (Cardiologist, Dentist, etc.).
-
-16. Add Content Display Area
-
-    * Insert a `<div id="content"></div>` for dynamic injection of doctor cards or data.
-
-17. Add a Footer Placeholder
-
-    * Use `<div id="footer"></div>` for a JavaScript-rendered footer.
-
-18. Add Modal Structure
-
-    * Include a modal with:
-      - A close button (`&times;`)
-      - A content area (`#modal-body`) for displaying popup information or forms.
-
-19. Include Page-Specific JavaScript Modules
-
-    * Load JavaScript specific to the admin dashboard:
-      - `adminDashboard.js` for dashboard logic.
-      - `doctorCard.js` for rendering doctor information cards.
-    * Use `type="module"` and `defer` for modern and non-blocking loading.
-
-    HINT:
-        `<script type="module" src="../../static/js/adminDashboard.js" defer></script>`
-        `<script type="module" src="../../static/js/doctorDashboard.js" defer></script>`
-        
-        
-20. Close the Body and HTML Tags
-
-    * Finish the structure by properly closing all tags.
-
- -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Smart Clinic</title>
+    <link rel="icon" type="image/png" th:href="@{/assets/images/logo/logo.png}" />
+    
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" th:href="@{/assets/css/style.css}">
+    <link rel="stylesheet" th:href="@{/assets/css/adminDashboard.css}">
+    
+    <!-- JavaScript Files -->
+    <script th:src="@{/js/util.js}" defer></script>
+    <script th:src="@{/js/render.js}" defer></script>
+    <script th:src="@{/js/components/header.js}" defer></script>
+    <script th:src="@{/js/components/footer.js}" defer></script>
+</head>
+<body onload="renderContent()">
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+    
+    <div class="container">
+        <div class="wrapper">
+            <!-- Header Section -->
+            <div id="header"></div>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Welcome Section -->
+                <section class="welcome-section">
+                    <div class="card">
+                        <div class="card-body">
+                            <h1>Admin Dashboard</h1>
+                            <p class="text-muted">Manage doctors, appointments, and system settings</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Quick Stats -->
+                <section class="stats-section">
+                    <div class="row">
+                        <div class="col-3">
+                            <div class="card stats-card">
+                                <div class="card-body text-center">
+                                    <div class="stats-icon text-primary">👨‍⚕️</div>
+                                    <h3 id="totalDoctors">0</h3>
+                                    <p>Total Doctors</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="card stats-card">
+                                <div class="card-body text-center">
+                                    <div class="stats-icon text-success">👥</div>
+                                    <h3 id="totalPatients">0</h3>
+                                    <p>Total Patients</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="card stats-card">
+                                <div class="card-body text-center">
+                                    <div class="stats-icon text-warning">📅</div>
+                                    <h3 id="todayAppointments">0</h3>
+                                    <p>Today's Appointments</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="card stats-card">
+                                <div class="card-body text-center">
+                                    <div class="stats-icon text-info">💊</div>
+                                    <h3 id="totalPrescriptions">0</h3>
+                                    <p>Total Prescriptions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Search and Filter Section -->
+                <section class="search-filter-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Doctor Management</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <input type="text" id="searchBar" class="form-control" placeholder="Search doctors by name, specialty, or email...">
+                                </div>
+                                <div class="col-3">
+                                    <select id="timeFilter" class="form-control form-select">
+                                        <option value="">All Time Slots</option>
+                                        <option value="AM">Morning (AM)</option>
+                                        <option value="PM">Afternoon/Evening (PM)</option>
+                                    </select>
+                                </div>
+                                <div class="col-3">
+                                    <select id="specialtyFilter" class="form-control form-select">
+                                        <option value="">All Specialties</option>
+                                        <option value="Cardiology">Cardiology</option>
+                                        <option value="Dermatology">Dermatology</option>
+                                        <option value="Neurology">Neurology</option>
+                                        <option value="Orthopedics">Orthopedics</option>
+                                        <option value="Pediatrics">Pediatrics</option>
+                                        <option value="Psychiatry">Psychiatry</option>
+                                        <option value="Family Medicine">Family Medicine</option>
+                                        <option value="Internal Medicine">Internal Medicine</option>
+                                        <option value="Gynecology">Gynecology</option>
+                                        <option value="Urology">Urology</option>
+                                        <option value="Oncology">Oncology</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <button class="btn btn-primary" onclick="addNewDoctor()">
+                                        ➕ Add New Doctor
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="exportDoctorData()">
+                                        📊 Export Data
+                                    </button>
+                                    <button class="btn btn-success" onclick="refreshDoctorList()">
+                                        🔄 Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Content Display Area -->
+                <section class="content-section">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3>Doctors List</h3>
+                            <div class="view-toggles">
+                                <button class="btn btn-sm btn-outline" onclick="toggleView('grid')" id="gridView">
+                                    📱 Grid View
+                                </button>
+                                <button class="btn btn-sm btn-outline" onclick="toggleView('table')" id="tableView">
+                                    📋 Table View
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="content">
+                                <div class="text-center">
+                                    <div class="spinner"></div>
+                                    <p>Loading doctors...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Recent Activity -->
+                <section class="activity-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Activity</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="recentActivity">
+                                <div class="text-center">
+                                    <div class="spinner"></div>
+                                    <p>Loading recent activity...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+            
+            <!-- Footer Section -->
+            <div id="footer"></div>
+        </div>
+    </div>
+    
+    <!-- Modal Structure -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Modal Title</h2>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="modal-body"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Doctor Modal -->
+    <div id="doctorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="doctorModalTitle">Add New Doctor</h2>
+                <span class="close" onclick="closeDoctorModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="doctorForm">
+                    <div class="form-group">
+                        <label for="doctorName" class="form-label">Full Name</label>
+                        <input type="text" id="doctorName" class="form-control" required>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="doctorSpecialty" class="form-label">Specialty</label>
+                        <select id="doctorSpecialty" class="form-control form-select" required>
+                            <option value="">Select Specialty</option>
+                            <option value="Cardiology">Cardiology</option>
+                            <option value="Dermatology">Dermatology</option>
+                            <option value="Neurology">Neurology</option>
+                            <option value="Orthopedics">Orthopedics</option>
+                            <option value="Pediatrics">Pediatrics</option>
+                            <option value="Psychiatry">Psychiatry</option>
+                            <option value="Family Medicine">Family Medicine</option>
+                            <option value="Internal Medicine">Internal Medicine</option>
+                            <option value="Gynecology">Gynecology</option>
+                            <option value="Urology">Urology</option>
+                            <option value="Oncology">Oncology</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="doctorEmail" class="form-label">Email</label>
+                        <input type="email" id="doctorEmail" class="form-control" required>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="doctorPhone" class="form-label">Phone</label>
+                        <input type="tel" id="doctorPhone" class="form-control" required>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="doctorLicense" class="form-label">License Number</label>
+                        <input type="text" id="doctorLicense" class="form-control" required>
+                        <div class="form-error"></div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeDoctorModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Doctor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Page-Specific JavaScript Modules -->
+    <script type="module" th:src="@{/js/adminDashboard.js}" defer></script>
+    <script type="module" th:src="@{/js/services/adminServices.js}" defer></script>
+</body>
+</html>
 
