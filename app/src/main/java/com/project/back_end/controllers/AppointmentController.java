@@ -1,7 +1,72 @@
+
 package com.project.back_end.controllers;
 
+import com.project.back_end.models.Appointment;
+import com.project.back_end.services.AppointmentService;
+import com.project.back_end.services.ValidationService;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
+import java.util.List;
 
+@RestController
+@RequestMapping("/appointments")
 public class AppointmentController {
+
+    private final AppointmentService appointmentService;
+    private final ValidationService validationService;
+
+    public AppointmentController(AppointmentService appointmentService, ValidationService validationService) {
+        this.appointmentService = appointmentService;
+        this.validationService = validationService;
+    }
+
+    // GET: Fetch appointments by date and patient name
+    @GetMapping("/get/{date}/{patientName}/{token}")
+    public ResponseEntity<?> getAppointments(@PathVariable String date, @PathVariable String patientName, @PathVariable String token) {
+        if (!validationService.validateToken(token, "doctor")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token.");
+        }
+        List<Appointment> appointments = appointmentService.getAppointmentsByDateAndPatient(date, patientName);
+        return ResponseEntity.ok(appointments);
+    }
+
+    // POST: Book a new appointment
+    @PostMapping("/book/{token}")
+    public ResponseEntity<?> bookAppointment(@Valid @RequestBody Appointment appointment, @PathVariable String token) {
+        if (!validationService.validateToken(token, "patient")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token.");
+        }
+        int result = appointmentService.bookAppointment(appointment);
+        if (result == 1) {
+            return ResponseEntity.ok("Appointment booked successfully.");
+        } else if (result == -1) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid doctor ID.");
+        } else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Doctor is not available at the selected time.");
+        }
+    }
+
+    // PUT: Update an existing appointment
+    @PutMapping("/update/{token}")
+    public ResponseEntity<?> updateAppointment(@Valid @RequestBody Appointment appointment, @PathVariable String token) {
+        if (!validationService.validateToken(token, "patient")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token.");
+        }
+        return appointmentService.updateAppointment(appointment);
+    }
+
+    // DELETE: Cancel an appointment
+    @DeleteMapping("/cancel/{appointmentId}/{token}")
+    public ResponseEntity<?> cancelAppointment(@PathVariable Long appointmentId, @PathVariable String token) {
+        if (!validationService.validateToken(token, "patient")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token.");
+        }
+        return appointmentService.cancelAppointment(appointmentId);
+    }
+
+
 
 // 1. Set Up the Controller Class:
 //    - Annotate the class with `@RestController` to define it as a REST API controller.
