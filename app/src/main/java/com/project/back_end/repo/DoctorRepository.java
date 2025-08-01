@@ -1,39 +1,66 @@
 package com.project.back_end.repo;
 
-public interface DoctorRepository {
-   // 1. Extend JpaRepository:
-//    - The repository extends JpaRepository<Doctor, Long>, which gives it basic CRUD functionality.
-//    - This allows the repository to perform operations like save, delete, update, and find without needing to implement these methods manually.
-//    - JpaRepository also includes features like pagination and sorting.
+import com.project.back_end.models.Doctor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-// Example: public interface DoctorRepository extends JpaRepository<Doctor, Long> {}
+import java.util.List;
+import java.util.Optional;
 
-// 2. Custom Query Methods:
-
-//    - **findByEmail**:
-//      - This method retrieves a Doctor by their email.
-//      - Return type: Doctor
-//      - Parameters: String email
-
-//    - **findByNameLike**:
-//      - This method retrieves a list of Doctors whose name contains the provided search string (case-sensitive).
-//      - The `CONCAT('%', :name, '%')` is used to create a pattern for partial matching.
-//      - Return type: List<Doctor>
-//      - Parameters: String name
-
-//    - **findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase**:
-//      - This method retrieves a list of Doctors where the name contains the search string (case-insensitive) and the specialty matches exactly (case-insensitive).
-//      - It combines both fields for a more specific search.
-//      - Return type: List<Doctor>
-//      - Parameters: String name, String specialty
-
-//    - **findBySpecialtyIgnoreCase**:
-//      - This method retrieves a list of Doctors with the specified specialty, ignoring case sensitivity.
-//      - Return type: List<Doctor>
-//      - Parameters: String specialty
-
-// 3. @Repository annotation:
-//    - The @Repository annotation marks this interface as a Spring Data JPA repository.
-//    - Spring Data JPA automatically implements this repository, providing the necessary CRUD functionality and custom queries defined in the interface.
-
+@Repository
+public interface DoctorRepository extends JpaRepository<Doctor, Long> {
+    
+    /**
+     * Find a doctor by email address
+     * @param email the email to search for
+     * @return Optional containing the doctor if found
+     */
+    Optional<Doctor> findByEmail(String email);
+    
+    /**
+     * Find doctors by name pattern (case-sensitive)
+     * @param name the name pattern to search for
+     * @return list of doctors matching the name pattern
+     */
+    @Query("SELECT d FROM Doctor d WHERE d.name LIKE CONCAT('%', :name, '%')")
+    List<Doctor> findByNameLike(@Param("name") String name);
+    
+    /**
+     * Find doctors by name containing (case-insensitive) and specialty (case-insensitive)
+     * @param name the name pattern to search for
+     * @param specialty the specialty to match
+     * @return list of doctors matching both criteria
+     */
+    List<Doctor> findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase(String name, String specialty);
+    
+    /**
+     * Find doctors by specialty (case-insensitive)
+     * @param specialty the specialty to search for
+     * @return list of doctors with the specified specialty
+     */
+    List<Doctor> findBySpecialtyIgnoreCase(String specialty);
+    
+    /**
+     * Find doctors by name containing (case-insensitive)
+     * @param name the name pattern to search for
+     * @return list of doctors matching the name pattern
+     */
+    List<Doctor> findByNameContainingIgnoreCase(String name);
+    
+    /**
+     * Find all doctors with their available times eagerly loaded
+     * @return list of all doctors with available times
+     */
+    @Query("SELECT DISTINCT d FROM Doctor d LEFT JOIN FETCH d.availableTimes")
+    List<Doctor> findAllWithAvailableTimes();
+    
+    /**
+     * Find doctor by ID with available times eagerly loaded
+     * @param id the doctor ID
+     * @return Optional containing the doctor with available times if found
+     */
+    @Query("SELECT d FROM Doctor d LEFT JOIN FETCH d.availableTimes WHERE d.id = :id")
+    Optional<Doctor> findByIdWithAvailableTimes(@Param("id") Long id);
 }

@@ -1,6 +1,15 @@
 package com.project.back_end.services;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class TokenService {
+
+    // Dummy implementation for demonstration; replace with real logic
+    public boolean validateToken(String token, String role) {
+        // TODO: Implement actual JWT validation and role check
+        return token != null && !token.isEmpty() && role != null && !role.isEmpty();
+    }
 // 1. **@Component Annotation**
 // The @Component annotation marks this class as a Spring component, meaning Spring will manage it as a bean within its application context.
 // This allows the class to be injected into other Spring-managed components (like services or controllers) where it's needed.

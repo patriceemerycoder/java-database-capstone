@@ -1,6 +1,106 @@
 package com.project.back_end.repo;
 
-public interface AppointmentRepository  {
+import com.project.back_end.models.Appointment;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Repository
+public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
+
+    /**
+     * Find appointments for a specific doctor within a time range
+     */
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.doctor LEFT JOIN FETCH a.patient " +
+           "WHERE a.doctor.id = :doctorId AND a.appointmentTime BETWEEN :start AND :end " +
+           "ORDER BY a.appointmentTime ASC")
+    List<Appointment> findByDoctorIdAndAppointmentTimeBetween(@Param("doctorId") Long doctorId, 
+                                                             @Param("start") LocalDateTime start, 
+                                                             @Param("end") LocalDateTime end);
+
+    /**
+     * Find appointments for a specific doctor and patient name within a time range
+     */
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.doctor LEFT JOIN FETCH a.patient " +
+           "WHERE a.doctor.id = :doctorId AND LOWER(a.patient.name) LIKE LOWER(CONCAT('%', :patientName, '%')) " +
+           "AND a.appointmentTime BETWEEN :start AND :end " +
+           "ORDER BY a.appointmentTime ASC")
+    List<Appointment> findByDoctorIdAndPatient_NameContainingIgnoreCaseAndAppointmentTimeBetween(
+            @Param("doctorId") Long doctorId, 
+            @Param("patientName") String patientName, 
+            @Param("start") LocalDateTime start, 
+            @Param("end") LocalDateTime end);
+
+    /**
+     * Delete all appointments for a specific doctor
+     */
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Appointment a WHERE a.doctor.id = :doctorId")
+    void deleteAllByDoctorId(@Param("doctorId") Long doctorId);
+
+    /**
+     * Find all appointments for a specific patient ordered by appointment time
+     */
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.doctor LEFT JOIN FETCH a.patient " +
+           "WHERE a.patient.id = :patientId ORDER BY a.appointmentTime DESC")
+    List<Appointment> findByPatientIdOrderByAppointmentTimeDesc(@Param("patientId") Long patientId);
+
+    /**
+     * Find all appointments for a specific doctor ordered by appointment time
+     */
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.doctor LEFT JOIN FETCH a.patient " +
+           "WHERE a.doctor.id = :doctorId ORDER BY a.appointmentTime DESC")
+    List<Appointment> findByDoctorIdOrderByAppointmentTimeDesc(@Param("doctorId") Long doctorId);
+
+    /**
+     * Find appointments for a specific patient with a given status
+     */
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.doctor LEFT JOIN FETCH a.patient " +
+           "WHERE a.patient.id = :patientId AND a.status = :status ORDER BY a.appointmentTime ASC")
+    List<Appointment> findByPatient_IdAndStatusOrderByAppointmentTimeAsc(@Param("patientId") Long patientId, 
+                                                                        @Param("status") int status);
+
+    /**
+     * Filter appointments by doctor name and patient ID
+     */
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.doctor LEFT JOIN FETCH a.patient " +
+           "WHERE LOWER(a.doctor.name) LIKE LOWER(CONCAT('%', :doctorName, '%')) " +
+           "AND a.patient.id = :patientId ORDER BY a.appointmentTime DESC")
+    List<Appointment> filterByDoctorNameAndPatientId(@Param("doctorName") String doctorName, 
+                                                     @Param("patientId") Long patientId);
+
+    /**
+     * Filter appointments by doctor name, patient ID, and status
+     */
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.doctor LEFT JOIN FETCH a.patient " +
+           "WHERE LOWER(a.doctor.name) LIKE LOWER(CONCAT('%', :doctorName, '%')) " +
+           "AND a.patient.id = :patientId AND a.status = :status ORDER BY a.appointmentTime DESC")
+    List<Appointment> filterByDoctorNameAndPatientIdAndStatus(@Param("doctorName") String doctorName, 
+                                                             @Param("patientId") Long patientId, 
+                                                             @Param("status") int status);
+
+    /**
+     * Update appointment status by ID
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE Appointment a SET a.status = :status WHERE a.id = :id")
+    void updateStatus(@Param("status") int status, @Param("id") long id);
+
+    /**
+     * Find all appointments by patient ID
+     */
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.doctor LEFT JOIN FETCH a.patient " +
+           "WHERE a.patient.id = :patientId")
+    List<Appointment> findByPatientId(@Param("patientId") Long patientId);
+}
 
    // 1. Extend JpaRepository:
 //    - The repository extends JpaRepository<Appointment, Long>, which gives it basic CRUD functionality.
@@ -57,10 +157,12 @@ public interface AppointmentRepository  {
 
 // 3. @Modifying and @Transactional annotations:
 //    - The @Modifying annotation is used to indicate that the method performs a modification operation (like DELETE or UPDATE).
-//    - The @Transactional annotation ensures that the modification is done within a transaction, meaning that if any exception occurs, the changes will be rolled back.
 
-// 4. @Repository annotation:
-//    - The @Repository annotation marks this interface as a Spring Data JPA repository.
-//    - Spring Data JPA automatically implements this repository, providing the necessary CRUD functionality and custom queries defined in the interface.
+    /**
+     * Check if any appointments exist for a specific doctor
+     * @param doctorId the doctor ID to check
+     * @return true if appointments exist, false otherwise
+     */
+    boolean existsByDoctorId(Long doctorId);
 
 }

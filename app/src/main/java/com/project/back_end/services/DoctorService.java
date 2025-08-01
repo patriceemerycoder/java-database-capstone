@@ -1,92 +1,405 @@
 package com.project.back_end.services;
 
+import com.project.back_end.models.Doctor;
+import com.project.back_end.models.AvailableTime;
+import com.project.back_end.repo.DoctorRepository;
+import com.project.back_end.repo.AppointmentRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
 public class DoctorService {
 
-// 1. **Add @Service Annotation**:
-//    - This class should be annotated with `@Service` to indicate that it is a service layer class.
-//    - The `@Service` annotation marks this class as a Spring-managed bean for business logic.
-//    - Instruction: Add `@Service` above the class declaration.
+    private final DoctorRepository doctorRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final TokenService tokenService;
+    private final com.project.back_end.services.Service serviceUtils;
 
-// 2. **Constructor Injection for Dependencies**:
-//    - The `DoctorService` class depends on `DoctorRepository`, `AppointmentRepository`, and `TokenService`.
-//    - These dependencies should be injected via the constructor for proper dependency management.
-//    - Instruction: Ensure constructor injection is used for injecting dependencies into the service.
+    @Autowired
+    public DoctorService(DoctorRepository doctorRepository, 
+                        AppointmentRepository appointmentRepository,
+                        TokenService tokenService,
+                        com.project.back_end.services.Service serviceUtils) {
+        this.doctorRepository = doctorRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.tokenService = tokenService;
+        this.serviceUtils = serviceUtils;
+    }
 
-// 3. **Add @Transactional Annotation for Methods that Modify or Fetch Database Data**:
-//    - Methods like `getDoctorAvailability`, `getDoctors`, `findDoctorByName`, `filterDoctorsBy*` should be annotated with `@Transactional`.
-//    - The `@Transactional` annotation ensures that database operations are consistent and wrapped in a single transaction.
-//    - Instruction: Add the `@Transactional` annotation above the methods that perform database operations or queries.
+    /**
+     * Get doctor availability based on their available times
+     * @param doctorId the ID of the doctor
+     * @return ResponseEntity with doctor availability information
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> getDoctorAvailability(Long doctorId) {
+        try {
+            Optional<Doctor> doctorOpt = doctorRepository.findByIdWithAvailableTimes(doctorId);
+            
+            if (doctorOpt.isEmpty()) {
+                return serviceUtils.createErrorResponse("Doctor not found", HttpStatus.NOT_FOUND);
+            }
+            
+            Doctor doctor = doctorOpt.get();
+            List<AvailableTime> availableTimes = doctor.getAvailableTimes();
+            
+            Map<String, Object> availability = Map.of(
+                "doctorId", doctor.getId(),
+                "doctorName", doctor.getName(),
+                "specialty", doctor.getSpecialty(),
+                "availableTimes", availableTimes
+            );
+            
+            return serviceUtils.createSuccessResponse("Doctor availability retrieved successfully", availability);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error retrieving doctor availability: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 4. **getDoctorAvailability Method**:
-//    - Retrieves the available time slots for a specific doctor on a particular date and filters out already booked slots.
-//    - The method fetches all appointments for the doctor on the given date and calculates the availability by comparing against booked slots.
-//    - Instruction: Ensure that the time slots are properly formatted and the available slots are correctly filtered.
+    /**
+     * Save a new doctor
+     * @param doctor the doctor to save
+     * @return ResponseEntity with the saved doctor
+     */
+    @Transactional
+    public ResponseEntity<Map<String, Object>> saveDoctor(Doctor doctor) {
+        try {
+            // Validate doctor data
+            if (doctor.getName() == null || doctor.getName().trim().isEmpty()) {
+                return serviceUtils.createErrorResponse("Doctor name is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (doctor.getEmail() == null || doctor.getEmail().trim().isEmpty()) {
+                return serviceUtils.createErrorResponse("Doctor email is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (doctor.getSpecialty() == null || doctor.getSpecialty().trim().isEmpty()) {
+                return serviceUtils.createErrorResponse("Doctor specialty is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            // Check if email already exists
+            Optional<Doctor> existingDoctor = doctorRepository.findByEmail(doctor.getEmail());
+            if (existingDoctor.isPresent()) {
+                return serviceUtils.createErrorResponse("Doctor with this email already exists", HttpStatus.CONFLICT);
+            }
+            
+            Doctor savedDoctor = doctorRepository.save(doctor);
+            return serviceUtils.createSuccessResponse("Doctor saved successfully", savedDoctor);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error saving doctor: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 5. **saveDoctor Method**:
-//    - Used to save a new doctor record in the database after checking if a doctor with the same email already exists.
-//    - If a doctor with the same email is found, it returns `-1` to indicate conflict; `1` for success, and `0` for internal errors.
-//    - Instruction: Ensure that the method correctly handles conflicts and exceptions when saving a doctor.
+    /**
+     * Update an existing doctor
+     * @param doctor the doctor with updated information
+     * @return ResponseEntity with the updated doctor
+     */
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateDoctor(Doctor doctor) {
+        try {
+            if (doctor.getId() == null) {
+                return serviceUtils.createErrorResponse("Doctor ID is required for update", HttpStatus.BAD_REQUEST);
+            }
+            
+            Optional<Doctor> existingDoctorOpt = doctorRepository.findById(doctor.getId());
+            if (existingDoctorOpt.isEmpty()) {
+                return serviceUtils.createErrorResponse("Doctor not found", HttpStatus.NOT_FOUND);
+            }
+            
+            Doctor existingDoctor = existingDoctorOpt.get();
+            
+            // Update fields if provided
+            if (doctor.getName() != null && !doctor.getName().trim().isEmpty()) {
+                existingDoctor.setName(doctor.getName());
+            }
+            if (doctor.getSpecialty() != null && !doctor.getSpecialty().trim().isEmpty()) {
+                existingDoctor.setSpecialty(doctor.getSpecialty());
+            }
+            if (doctor.getEmail() != null && !doctor.getEmail().trim().isEmpty()) {
+                // Check if new email already exists for another doctor
+                Optional<Doctor> doctorWithEmail = doctorRepository.findByEmail(doctor.getEmail());
+                if (doctorWithEmail.isPresent() && !doctorWithEmail.get().getId().equals(doctor.getId())) {
+                    return serviceUtils.createErrorResponse("Email already exists for another doctor", HttpStatus.CONFLICT);
+                }
+                existingDoctor.setEmail(doctor.getEmail());
+            }
+            
+            Doctor updatedDoctor = doctorRepository.save(existingDoctor);
+            return serviceUtils.createSuccessResponse("Doctor updated successfully", updatedDoctor);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error updating doctor: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 6. **updateDoctor Method**:
-//    - Updates an existing doctor's details in the database. If the doctor doesn't exist, it returns `-1`.
-//    - Instruction: Make sure that the doctor exists before attempting to save the updated record and handle any errors properly.
+    /**
+     * Get all doctors with their available times
+     * @return ResponseEntity with list of doctors
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> getDoctors() {
+        try {
+            List<Doctor> doctors = doctorRepository.findAllWithAvailableTimes();
+            return serviceUtils.createSuccessResponse("Doctors retrieved successfully", doctors);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error retrieving doctors: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 7. **getDoctors Method**:
-//    - Fetches all doctors from the database. It is marked with `@Transactional` to ensure that the collection is properly loaded.
-//    - Instruction: Ensure that the collection is eagerly loaded, especially if dealing with lazy-loaded relationships (e.g., available times). 
+    /**
+     * Delete a doctor by ID
+     * @param id the ID of the doctor to delete
+     * @return ResponseEntity with deletion status
+     */
+    @Transactional
+    public ResponseEntity<Map<String, Object>> deleteDoctor(Long id) {
+        try {
+            if (!doctorRepository.existsById(id)) {
+                return serviceUtils.createErrorResponse("Doctor not found", HttpStatus.NOT_FOUND);
+            }
+            
+            // Check if doctor has any appointments
+            boolean hasAppointments = appointmentRepository.existsByDoctorId(id);
+            if (hasAppointments) {
+                return serviceUtils.createErrorResponse("Cannot delete doctor with existing appointments", 
+                                                      HttpStatus.CONFLICT);
+            }
+            
+            doctorRepository.deleteById(id);
+            return serviceUtils.createSuccessResponse("Doctor deleted successfully", null);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error deleting doctor: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 8. **deleteDoctor Method**:
-//    - Deletes a doctor from the system along with all appointments associated with that doctor.
-//    - It first checks if the doctor exists. If not, it returns `-1`; otherwise, it deletes the doctor and their appointments.
-//    - Instruction: Ensure the doctor and their appointments are deleted properly, with error handling for internal issues.
+    /**
+     * Validate doctor credentials
+     * @param email the doctor's email
+     * @param password the doctor's password
+     * @return ResponseEntity with validation result
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> validateDoctor(String email, String password) {
+        try {
+            Optional<Doctor> doctorOpt = doctorRepository.findByEmail(email);
+            
+            if (doctorOpt.isEmpty()) {
+                return serviceUtils.createErrorResponse("Invalid credentials", HttpStatus.UNAUTHORIZED);
+            }
+            
+            Doctor doctor = doctorOpt.get();
+            
+            // Validate password (assuming password is stored in the doctor entity)
+            if (!doctor.getPassword().equals(password)) {
+                return serviceUtils.createErrorResponse("Invalid credentials", HttpStatus.UNAUTHORIZED);
+            }
+            
+            // Generate token for authenticated doctor
+            String token = tokenService.generateToken(doctor.getEmail(), "DOCTOR");
+            
+            Map<String, Object> response = Map.of(
+                "doctor", doctor,
+                "token", token,
+                "role", "DOCTOR"
+            );
+            
+            return serviceUtils.createSuccessResponse("Doctor authenticated successfully", response);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error validating doctor: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 9. **validateDoctor Method**:
-//    - Validates a doctor's login by checking if the email and password match an existing doctor record.
-//    - It generates a token for the doctor if the login is successful, otherwise returns an error message.
-//    - Instruction: Make sure to handle invalid login attempts and password mismatches properly with error responses.
+    /**
+     * Find doctor by name
+     * @param name the name to search for
+     * @return ResponseEntity with matching doctors
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> findDoctorByName(String name) {
+        try {
+            if (name == null || name.trim().isEmpty()) {
+                return serviceUtils.createErrorResponse("Name parameter is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            List<Doctor> doctors = doctorRepository.findByNameContainingIgnoreCase(name.trim());
+            return serviceUtils.createSuccessResponse("Doctors found successfully", doctors);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error finding doctor by name: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 10. **findDoctorByName Method**:
-//    - Finds doctors based on partial name matching and returns the list of doctors with their available times.
-//    - This method is annotated with `@Transactional` to ensure that the database query and data retrieval are properly managed within a transaction.
-//    - Instruction: Ensure that available times are eagerly loaded for the doctors.
+    /**
+     * Filter doctors by name, specialty, and time
+     * @param name the name pattern
+     * @param specialty the specialty
+     * @param time the time period (AM/PM)
+     * @return ResponseEntity with filtered doctors
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> filterDoctorsByNameSpecialtyAndTime(String name, String specialty, String time) {
+        try {
+            List<Doctor> doctors = doctorRepository.findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase(name, specialty);
+            List<Doctor> filteredDoctors = filterDoctorsByTime(doctors, time);
+            
+            return serviceUtils.createSuccessResponse("Doctors filtered successfully", filteredDoctors);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error filtering doctors: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
+    /**
+     * Filter doctors by time availability
+     * @param doctors the list of doctors to filter
+     * @param time the time period (AM/PM)
+     * @return filtered list of doctors
+     */
+    private List<Doctor> filterDoctorsByTime(List<Doctor> doctors, String time) {
+        if (time == null || time.trim().isEmpty()) {
+            return doctors;
+        }
+        
+        boolean isAM = time.trim().equalsIgnoreCase("AM");
+        
+        return doctors.stream()
+            .filter(doctor -> {
+                List<AvailableTime> availableTimes = doctor.getAvailableTimes();
+                if (availableTimes == null || availableTimes.isEmpty()) {
+                    return false;
+                }
+                
+                return availableTimes.stream()
+                    .anyMatch(availableTime -> {
+                        LocalTime startTime = availableTime.getStartTime();
+                        LocalTime endTime = availableTime.getEndTime();
+                        
+                        if (isAM) {
+                            // Check if any time slot is in AM (before 12:00)
+                            return startTime.isBefore(LocalTime.NOON) || endTime.isBefore(LocalTime.NOON);
+                        } else {
+                            // Check if any time slot is in PM (after 12:00)
+                            return startTime.isAfter(LocalTime.NOON) || endTime.isAfter(LocalTime.NOON);
+                        }
+                    });
+            })
+            .collect(Collectors.toList());
+    }
 
-// 11. **filterDoctorsByNameSpecilityandTime Method**:
-//    - Filters doctors based on their name, specialty, and availability during a specific time (AM/PM).
-//    - The method fetches doctors matching the name and specialty criteria, then filters them based on their availability during the specified time period.
-//    - Instruction: Ensure proper filtering based on both the name and specialty as well as the specified time period.
+    /**
+     * Filter doctors by name and time
+     * @param name the name pattern
+     * @param time the time period (AM/PM)
+     * @return ResponseEntity with filtered doctors
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> filterDoctorByNameAndTime(String name, String time) {
+        try {
+            List<Doctor> doctors = doctorRepository.findByNameContainingIgnoreCase(name);
+            List<Doctor> filteredDoctors = filterDoctorsByTime(doctors, time);
+            
+            return serviceUtils.createSuccessResponse("Doctors filtered by name and time successfully", filteredDoctors);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error filtering doctors by name and time: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 12. **filterDoctorByTime Method**:
-//    - Filters a list of doctors based on whether their available times match the specified time period (AM/PM).
-//    - This method processes a list of doctors and their available times to return those that fit the time criteria.
-//    - Instruction: Ensure that the time filtering logic correctly handles both AM and PM time slots and edge cases.
+    /**
+     * Filter doctors by name and specialty
+     * @param name the name pattern
+     * @param specialty the specialty
+     * @return ResponseEntity with filtered doctors
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> filterDoctorByNameAndSpecialty(String name, String specialty) {
+        try {
+            List<Doctor> doctors = doctorRepository.findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase(name, specialty);
+            return serviceUtils.createSuccessResponse("Doctors filtered by name and specialty successfully", doctors);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error filtering doctors by name and specialty: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
+    /**
+     * Filter doctors by time and specialty
+     * @param specialty the specialty
+     * @param time the time period (AM/PM)
+     * @return ResponseEntity with filtered doctors
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> filterDoctorByTimeAndSpecialty(String specialty, String time) {
+        try {
+            List<Doctor> doctors = doctorRepository.findBySpecialtyIgnoreCase(specialty);
+            List<Doctor> filteredDoctors = filterDoctorsByTime(doctors, time);
+            
+            return serviceUtils.createSuccessResponse("Doctors filtered by specialty and time successfully", filteredDoctors);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error filtering doctors by specialty and time: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 13. **filterDoctorByNameAndTime Method**:
-//    - Filters doctors based on their name and the specified time period (AM/PM).
-//    - Fetches doctors based on partial name matching and filters the results to include only those available during the specified time period.
-//    - Instruction: Ensure that the method correctly filters doctors based on the given name and time of day (AM/PM).
+    /**
+     * Filter doctors by specialty
+     * @param specialty the specialty
+     * @return ResponseEntity with filtered doctors
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> filterDoctorBySpecialty(String specialty) {
+        try {
+            List<Doctor> doctors = doctorRepository.findBySpecialtyIgnoreCase(specialty);
+            return serviceUtils.createSuccessResponse("Doctors filtered by specialty successfully", doctors);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error filtering doctors by specialty: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-// 14. **filterDoctorByNameAndSpecility Method**:
-//    - Filters doctors by name and specialty.
-//    - It ensures that the resulting list of doctors matches both the name (case-insensitive) and the specified specialty.
-//    - Instruction: Ensure that both name and specialty are considered when filtering doctors.
-
-
-// 15. **filterDoctorByTimeAndSpecility Method**:
-//    - Filters doctors based on their specialty and availability during a specific time period (AM/PM).
-//    - Fetches doctors based on the specified specialty and filters them based on their available time slots for AM/PM.
-//    - Instruction: Ensure the time filtering is accurately applied based on the given specialty and time period (AM/PM).
-
-// 16. **filterDoctorBySpecility Method**:
-//    - Filters doctors based on their specialty.
-//    - This method fetches all doctors matching the specified specialty and returns them.
-//    - Instruction: Make sure the filtering logic works for case-insensitive specialty matching.
-
-// 17. **filterDoctorsByTime Method**:
-//    - Filters all doctors based on their availability during a specific time period (AM/PM).
-//    - The method checks all doctors' available times and returns those available during the specified time period.
-//    - Instruction: Ensure proper filtering logic to handle AM/PM time periods.
-
-   
+    /**
+     * Filter all doctors by time availability
+     * @param time the time period (AM/PM)
+     * @return ResponseEntity with filtered doctors
+     */
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> filterDoctorsByTime(String time) {
+        try {
+            List<Doctor> allDoctors = doctorRepository.findAllWithAvailableTimes();
+            List<Doctor> filteredDoctors = filterDoctorsByTime(allDoctors, time);
+            
+            return serviceUtils.createSuccessResponse("Doctors filtered by time successfully", filteredDoctors);
+            
+        } catch (Exception e) {
+            return serviceUtils.createErrorResponse("Error filtering doctors by time: " + e.getMessage(), 
+                                                  HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
