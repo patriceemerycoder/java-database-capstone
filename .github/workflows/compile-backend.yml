@@ -1,0 +1,218 @@
+name: Compile Backend
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'app/**'
+      - '.github/workflows/compile-backend.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - '.github/workflows/compile-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  compile-backend:
+    runs-on: ubuntu-latest
+    name: Compile Java Backend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('app/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: Validate Maven wrapper
+      run: |
+        cd app
+        chmod +x mvnw
+        
+    - name: Clean previous builds
+      run: |
+        cd app
+        ./mvnw clean
+        
+    - name: Compile Java sources
+      run: |
+        cd app
+        ./mvnw compile
+        
+    - name: Check for compilation errors
+      run: |
+        cd app
+        if [ -d "target/classes" ]; then
+          echo "✅ Compilation successful!"
+          echo "Compiled classes found in target/classes"
+          find target/classes -name "*.class" | head -10
+        else
+          echo "❌ Compilation failed!"
+          exit 1
+        fi
+        
+    - name: Compile test sources
+      run: |
+        cd app
+        ./mvnw test-compile
+        
+    - name: Generate compilation report
+      if: always()
+      run: |
+        cd app
+        echo "## Backend Compilation Report" > compilation-report.md
+        echo "" >> compilation-report.md
+        echo "**Status:** $(if [ -d "target/classes" ]; then echo "✅ SUCCESS"; else echo "❌ FAILED"; fi)" >> compilation-report.md
+        echo "" >> compilation-report.md
+        echo "**Java Version:** $(java -version 2>&1 | head -1)" >> compilation-report.md
+        echo "" >> compilation-report.md
+        echo "**Maven Version:** $(./mvnw --version | head -1)" >> compilation-report.md
+        echo "" >> compilation-report.md
+        if [ -d "target/classes" ]; then
+          echo "**Compiled Classes:**" >> compilation-report.md
+          echo "\`\`\`" >> compilation-report.md
+          find target/classes -name "*.class" | wc -l | xargs echo "Total classes:" >> compilation-report.md
+          echo "\`\`\`" >> compilation-report.md
+        fi
+        
+    - name: Upload compilation artifacts
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: compiled-backend
+        path: |
+          app/target/classes/
+          app/target/test-classes/
+        retention-days: 7
+        
+    - name: Upload compilation report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: compilation-report
+        path: app/compilation-report.md
+        retention-days: 7
+        
+  validate-structure:
+    runs-on: ubuntu-latest
+    name: Validate Project Structure
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate project structure
+      run: |
+        echo "🔍 Validating project structure..."
+        
+        # Check required directories
+        REQUIRED_DIRS=(
+          "app/src/main/java"
+          "app/src/main/resources"
+          "app/src/test/java"
+        )
+        
+        for dir in "${REQUIRED_DIRS[@]}"; do
+          if [ -d "$dir" ]; then
+            echo "✅ $dir exists"
+          else
+            echo "❌ $dir missing"
+            exit 1
+          fi
+        done
+        
+        # Check required files
+        REQUIRED_FILES=(
+          "app/pom.xml"
+          "app/mvnw"
+          "app/mvnw.cmd"
+        )
+        
+        for file in "${REQUIRED_FILES[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+        
+        # Check Java package structure
+        if [ -d "app/src/main/java/com/project/back_end" ]; then
+          echo "✅ Java package structure is correct"
+        else
+          echo "❌ Java package structure incorrect"
+          exit 1
+        fi
+        
+        echo "🎉 Project structure validation passed!"
+        
+  dependency-check:
+    runs-on: ubuntu-latest
+    name: Check Dependencies
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Validate dependencies
+      run: |
+        cd app
+        chmod +x mvnw
+        echo "🔍 Checking Maven dependencies..."
+        ./mvnw dependency:tree
+        
+    - name: Check for dependency conflicts
+      run: |
+        cd app
+        echo "🔍 Checking for dependency conflicts..."
+        ./mvnw dependency:analyze
+        
+    - name: Verify Maven wrapper
+      run: |
+        cd app
+        echo "🔍 Verifying Maven wrapper..."
+        ./mvnw --version
+        
+  notify-status:
+    runs-on: ubuntu-latest
+    needs: [compile-backend, validate-structure, dependency-check]
+    name: Compilation Status
+    if: always()
+    
+    steps:
+    - name: Report success
+      if: ${{ needs.compile-backend.result == 'success' && needs.validate-structure.result == 'success' && needs.dependency-check.result == 'success' }}
+      run: |
+        echo "🎉 Backend compilation completed successfully!"
+        echo "✅ All checks passed:"
+        echo "  - Java compilation: SUCCESS"
+        echo "  - Project structure: VALID"
+        echo "  - Dependencies: RESOLVED"
+        
+    - name: Report failure
+      if: ${{ needs.compile-backend.result == 'failure' || needs.validate-structure.result == 'failure' || needs.dependency-check.result == 'failure' }}
+      run: |
+        echo "❌ Backend compilation failed!"
+        echo "Check the following:"
+        echo "  - Compilation: ${{ needs.compile-backend.result }}"
+        echo "  - Structure: ${{ needs.validate-structure.result }}"
+        echo "  - Dependencies: ${{ needs.dependency-check.result }}"
+        exit 1
