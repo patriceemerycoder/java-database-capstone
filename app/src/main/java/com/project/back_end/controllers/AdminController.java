@@ -3,8 +3,8 @@
 package com.project.back_end.controllers;
 
 
-import com.project_back_end.models.Admin;
-import com.project_back_end.services.ValidationService;
+import com.project.back_end.models.Admin;
+import com.project.back_end.services.ValidationService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import java.util.Map;
@@ -25,25 +25,51 @@ public class AdminController {
         return validationService.validateAdmin(admin);
     }
 
-// 1. Set Up the Controller Class:
-//    - Annotate the class with `@RestController` to indicate that it's a REST controller, used to handle web requests and return JSON responses.
-//    - Use `@RequestMapping("${api.path}admin")` to define a base path for all endpoints in this controller.
-//    - This allows the use of an external property (`api.path`) for flexible configuration of endpoint paths.
+    // GET: Get all admins (stub)
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getAllAdmins() {
+        // Stub response for demonstration
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("status", "success");
+        response.put("admins", java.util.Collections.emptyList());
+        return ResponseEntity.ok(response);
+    }
 
+    // GET: Get admin by ID (stub)
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getAdminById(@PathVariable Long id) {
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("status", "success");
+        response.put("admin", null); // Replace with actual admin lookup
+        return ResponseEntity.ok(response);
+    }
 
-// 2. Autowire Service Dependency:
-//    - Use constructor injection to autowire the `Service` class.
-//    - The service handles core logic related to admin validation and token checking.
-//    - This promotes cleaner code and separation of concerns between the controller and business logic layer.
+    // POST: Create new admin (stub)
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> createAdmin(@RequestBody Admin admin) {
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Admin created");
+        return ResponseEntity.ok(response);
+    }
 
+    // PUT: Update admin (stub)
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateAdmin(@PathVariable Long id, @RequestBody Admin admin) {
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Admin updated");
+        return ResponseEntity.ok(response);
+    }
 
-// 3. Define the `adminLogin` Method:
-//    - Handles HTTP POST requests for admin login functionality.
-//    - Accepts an `Admin` object in the request body, which contains login credentials.
-//    - Delegates authentication logic to the `validateAdmin` method in the service layer.
-//    - Returns a `ResponseEntity` with a `Map` containing login status or messages.
-
-
+    // DELETE: Delete admin (stub)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteAdmin(@PathVariable Long id) {
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Admin deleted");
+        return ResponseEntity.ok(response);
+    }
 
 }
 
