@@ -1,0 +1,109 @@
+{
+  "doctors": [
+    {
+      "id": 1,
+      "name": "Dr. Sarah Johnson",
+      "email": "sarah.johnson@hospital.com",
+      "specialty": "Cardiologist",
+      "phone": "+1-555-0123",
+      "availableTimes": [
+        {
+          "id": 1,
+          "startTime": "09:00:00",
+          "endTime": "12:00:00",
+          "dayOfWeek": "MONDAY"
+        },
+        {
+          "id": 2,
+          "startTime": "14:00:00",
+          "endTime": "17:00:00",
+          "dayOfWeek": "TUESDAY"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Dr. Michael Chen",
+      "email": "michael.chen@hospital.com",
+      "specialty": "Dermatologist",
+      "phone": "+1-555-0124",
+      "availableTimes": [
+        {
+          "id": 3,
+          "startTime": "08:00:00",
+          "endTime": "11:00:00",
+          "dayOfWeek": "WEDNESDAY"
+        },
+        {
+          "id": 4,
+          "startTime": "13:00:00",
+          "endTime": "16:00:00",
+          "dayOfWeek": "FRIDAY"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Dr. Emily Rodriguez",
+      "email": "emily.rodriguez@hospital.com",
+      "specialty": "Pediatrician",
+      "phone": "+1-555-0125",
+      "availableTimes": [
+        {
+          "id": 5,
+          "startTime": "10:00:00",
+          "endTime": "13:00:00",
+          "dayOfWeek": "MONDAY"
+        },
+        {
+          "id": 6,
+          "startTime": "15:00:00",
+          "endTime": "18:00:00",
+          "dayOfWeek": "THURSDAY"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Dr. James Wilson",
+      "email": "james.wilson@hospital.com",
+      "specialty": "Neurologist",
+      "phone": "+1-555-0126",
+      "availableTimes": [
+        {
+          "id": 7,
+          "startTime": "07:00:00",
+          "endTime": "10:00:00",
+          "dayOfWeek": "TUESDAY"
+        },
+        {
+          "id": 8,
+          "startTime": "14:00:00",
+          "endTime": "17:00:00",
+          "dayOfWeek": "WEDNESDAY"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Dr. Lisa Anderson",
+      "email": "lisa.anderson@hospital.com",
+      "specialty": "Orthopedic",
+      "phone": "+1-555-0127",
+      "availableTimes": [
+        {
+          "id": 9,
+          "startTime": "09:00:00",
+          "endTime": "12:00:00",
+          "dayOfWeek": "FRIDAY"
+        },
+        {
+          "id": 10,
+          "startTime": "13:00:00",
+          "endTime": "16:00:00",
+          "dayOfWeek": "MONDAY"
+        }
+      ]
+    }
+  ]
+}
