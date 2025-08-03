@@ -1,8 +1,11 @@
 package com.project.back_end.DTO;
 
 public class Login {
-
+    @Email
+    @NotBlank
     private String email;
+
+    @NotBlank
     private String password;
 
     public Login() {
